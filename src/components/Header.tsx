@@ -13,9 +13,10 @@ interface HeaderProps {
   domains: Domain[];
   onSignOut: () => void;
   onEditProfile: () => void;
+  onNavigate?: (tab: 'feedback' | 'teams') => void;
 }
 
-export function Header({ onSubscribe, onRefresh, subscriberCount, profile, domains, onSignOut, onEditProfile }: HeaderProps) {
+export function Header({ onSubscribe, onRefresh, subscriberCount, profile, domains, onSignOut, onEditProfile, onNavigate }: HeaderProps) {
   const [fetching, setFetching] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -76,7 +77,7 @@ export function Header({ onSubscribe, onRefresh, subscriberCount, profile, domai
           )}
 
           {profile && (
-            <ProfileMenu profile={profile} domains={domains} onSignOut={onSignOut} onEditProfile={onEditProfile} />
+            <ProfileMenu profile={profile} domains={domains} onSignOut={onSignOut} onEditProfile={onEditProfile} onNavigate={onNavigate} />
           )}
         </div>
       </div>

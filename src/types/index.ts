@@ -134,3 +134,57 @@ export interface ChatMessage {
   stats?: AgentResponse['stats'];
   trending?: AgentResponse['trending'];
 }
+
+export type FeedbackCategory = 'bug' | 'feature_request' | 'general' | 'praise';
+export type FeedbackStatus = 'open' | 'reviewing' | 'resolved';
+
+export interface Feedback {
+  id: string;
+  user_id: string;
+  category: FeedbackCategory;
+  subject: string;
+  message: string;
+  status: FeedbackStatus;
+  created_at: string;
+}
+
+export interface AppRating {
+  id: string;
+  user_id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  description: string | null;
+  owner_id: string;
+  created_at: string;
+}
+
+export type MemberRole = 'owner' | 'member';
+export type MemberStatus = 'pending' | 'accepted' | 'declined';
+
+export interface TeamMember {
+  id: string;
+  team_id: string;
+  user_id: string | null;
+  role: MemberRole;
+  invited_email: string | null;
+  status: MemberStatus;
+  joined_at: string | null;
+  created_at: string;
+}
+
+export interface SharedJob {
+  id: string;
+  team_id: string;
+  job_id: string;
+  shared_by: string;
+  note: string | null;
+  created_at: string;
+  job_postings?: JobPosting;
+}

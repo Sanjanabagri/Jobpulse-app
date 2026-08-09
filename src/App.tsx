@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Briefcase, CalendarClock, Sparkles, MessageCircle } from 'lucide-react';
+import { Briefcase, CalendarClock, Sparkles, MessageCircle, Star, Users } from 'lucide-react';
 import { SplashScreen } from '@/components/SplashScreen';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
@@ -7,6 +7,8 @@ import { JobFeed } from '@/components/JobFeed';
 import { StatsBar } from '@/components/StatsBar';
 import { AgentChat } from '@/components/AgentChat';
 import { SubscribeModal } from '@/components/SubscribeModal';
+import { FeedbackPage } from '@/components/FeedbackPage';
+import { TeamsPage } from '@/components/TeamsPage';
 import { DigestView } from '@/components/DigestView';
 import { AuthPage } from '@/components/AuthPage';
 import { ProfileOnboarding } from '@/components/ProfileOnboarding';
@@ -14,7 +16,7 @@ import { EditProfileModal } from '@/components/EditProfileModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useDomains, useJobPostings, useDailyDigests, useSubscriberCount } from '@/hooks/useData';
 
-type Tab = 'jobs' | 'triggers';
+type Tab = 'jobs' | 'triggers' | 'feedback' | 'teams';
 
 function App() {
   const auth = useAuth();
@@ -81,6 +83,7 @@ function App() {
         domains={domains}
         onSignOut={auth.signOut}
         onEditProfile={() => setEditProfileOpen(true)}
+        onNavigate={(tab) => setActiveTab(tab)}
       />
 
       <div className="flex">
@@ -113,6 +116,24 @@ function App() {
               <CalendarClock className="h-4 w-4" />
               Daily Triggers
             </button>
+            <button
+              onClick={() => setActiveTab('teams')}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                activeTab === 'teams' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Users className="h-4 w-4" />
+              Teams
+            </button>
+            <button
+              onClick={() => setActiveTab('feedback')}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                activeTab === 'feedback' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Star className="h-4 w-4" />
+              Feedback
+            </button>
           </div>
 
           <StatsBar key={refreshKey} />
@@ -129,9 +150,13 @@ function App() {
               userId={userId}
               hasProfile={!!auth.profile}
             />
-          ) : (
+          ) : activeTab === 'triggers' ? (
             <DigestView digests={digests} loading={digestsLoading} />
-          )}
+          ) : activeTab === 'teams' ? (
+            <TeamsPage />
+          ) : (
+            <FeedbackPage />
+          )
         </main>
       </div>
 

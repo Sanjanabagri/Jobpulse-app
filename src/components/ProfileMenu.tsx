@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   User, LogOut, ChevronDown, CheckCircle2, Award, MapPin, Target,
-  Settings, Bookmark, Eye, Briefcase, Zap,
+  Settings, Bookmark, Eye, Briefcase, Zap, Star, Users,
 } from 'lucide-react';
 import type { Profile, Domain } from '@/types';
 import { DomainIcon } from './DomainIcon';
@@ -11,11 +11,12 @@ interface ProfileMenuProps {
   domains: Domain[];
   onSignOut: () => void;
   onEditProfile: () => void;
+  onNavigate?: (tab: 'feedback' | 'teams') => void;
 }
 
 type View = 'menu' | 'profile';
 
-export function ProfileMenu({ profile, domains, onSignOut, onEditProfile }: ProfileMenuProps) {
+export function ProfileMenu({ profile, domains, onSignOut, onEditProfile, onNavigate }: ProfileMenuProps) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<View>('menu');
   const ref = useRef<HTMLDivElement>(null);
@@ -100,6 +101,21 @@ export function ProfileMenu({ profile, domains, onSignOut, onEditProfile }: Prof
               >
                 <Settings className="h-4 w-4 text-slate-400" />
                 Settings
+              </button>
+              <div className="my-1 border-t border-slate-100" />
+              <button
+                onClick={() => { onNavigate?.('teams'); setOpen(false); }}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
+              >
+                <Users className="h-4 w-4 text-slate-400" />
+                Teams
+              </button>
+              <button
+                onClick={() => { onNavigate?.('feedback'); setOpen(false); }}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
+              >
+                <Star className="h-4 w-4 text-slate-400" />
+                Feedback & Rating
               </button>
               <div className="my-1 border-t border-slate-100" />
               <button
