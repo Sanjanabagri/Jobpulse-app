@@ -188,3 +188,87 @@ export interface SharedJob {
   created_at: string;
   job_postings?: JobPosting;
 }
+
+// ============ JOB APPLICATIONS ============
+
+export type ApplicationStatus = 'applied' | 'reviewing' | 'interview' | 'offer' | 'rejected' | 'withdrawn';
+
+export interface JobApplication {
+  id: string;
+  user_id: string;
+  job_id: string;
+  status: ApplicationStatus;
+  cover_note: string | null;
+  applied_at: string;
+  created_at: string;
+  updated_at: string;
+  job_postings?: JobPosting;
+}
+
+// ============ COMPANY PROFILES ============
+
+export interface CompanyProfile {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  website: string | null;
+  description: string | null;
+  industry: string | null;
+  location: string | null;
+  size_range: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ============ EMPLOYER JOBS ============
+
+export type EmployerJobStatus = 'draft' | 'active' | 'closed';
+
+export interface EmployerJob {
+  id: string;
+  company_profile_id: string;
+  posted_by: string;
+  title: string;
+  description: string | null;
+  location: string | null;
+  is_remote: boolean;
+  job_type: string | null;
+  experience_level: string | null;
+  salary_min: number | null;
+  salary_max: number | null;
+  currency: string;
+  tags: string[];
+  status: EmployerJobStatus;
+  is_promoted: boolean;
+  domain_id: string | null;
+  apply_url: string | null;
+  posted_at: string | null;
+  created_at: string;
+  updated_at: string;
+  company_profiles?: CompanyProfile;
+  domains?: Domain;
+}
+
+// ============ NOTIFICATIONS ============
+
+export type NotificationType = 'job_alert' | 'application_update' | 'team_invite' | 'system' | 'promoted';
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  body: string | null;
+  link: string | null;
+  is_read: boolean;
+  created_at: string;
+}
+
+// ============ EXTENDED PROFILE ============
+
+export interface ExtendedProfile extends Profile {
+  resume_url?: string | null;
+  is_employer?: boolean;
+  company_profile_id?: string | null;
+}
