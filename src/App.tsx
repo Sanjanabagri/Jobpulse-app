@@ -156,7 +156,7 @@ function App() {
             <TeamsPage />
           ) : (
             <FeedbackPage />
-          )
+          )}
         </main>
       </div>
 
