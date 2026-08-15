@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, EDGE_FUNCTIONS, edgeHeaders } from '@/lib/supabase';
 import type { Profile } from '@/types';
 
 export function useAuth() {
@@ -79,6 +79,32 @@ export function useAuth() {
     if (error) throw error;
   }, []);
 
+  const sendResetOTP = useCallback(async (email: string) => {
+    const res = await fetch(EDGE_FUNCTIONS.passwordReset, {
+      method: 'POST',
+      headers: edgeHeaders(),
+      body: JSON.stringify({ action: 'send_otp', email }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({ error: 'Failed to send OTP' }));
+      throw new Error(data.error || 'Failed to send OTP');
+    }
+    return res.json();
+  }, []);
+
+  const verifyOTPAndReset = useCallback(async (email: string, otp: string, newPassword: string) => {
+    const res = await fetch(EDGE_FUNCTIONS.passwordReset, {
+      method: 'POST',
+      headers: edgeHeaders(),
+      body: JSON.stringify({ action: 'verify_otp', email, otp, newPassword }),
+    });
+    const data = await res.json().catch(() => ({ error: 'Failed to reset password' }));
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to reset password');
+    }
+    return data;
+  }, []);
+
   const refreshProfile = useCallback(async () => {
     if (session?.user) {
       await loadProfile(session.user.id);
@@ -97,5 +123,7 @@ export function useAuth() {
     signOut,
     refreshProfile,
     resendConfirmation,
+    sendResetOTP,
+    verifyOTPAndReset,
   };
 }

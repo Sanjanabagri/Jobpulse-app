@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Zap, Mail, Lock, User, Loader2, ArrowRight, Sparkles, ShieldCheck, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { VerifyEmail } from './VerifyEmail';
+import { ForgotPassword } from './ForgotPassword';
 
 interface AuthPageProps {
   auth: ReturnType<typeof useAuth>;
@@ -15,6 +16,7 @@ export function AuthPage({ auth }: AuthPageProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [forgotPassword, setForgotPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -36,6 +38,10 @@ export function AuthPage({ auth }: AuthPageProps) {
 
   function handleResend() {
     if (pendingEmail) auth.resendConfirmation(pendingEmail).catch(() => {});
+  }
+
+  if (forgotPassword) {
+    return <ForgotPassword auth={auth} onBack={() => { setForgotPassword(false); setError(''); }} />;
   }
 
   if (pendingEmail) {
@@ -174,6 +180,18 @@ export function AuthPage({ auth }: AuthPageProps) {
             {error && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {error}
+              </div>
+            )}
+
+            {mode === 'signin' && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => { setForgotPassword(true); setError(''); }}
+                  className="text-sm font-medium text-sky-600 transition hover:text-sky-700"
+                >
+                  Forgot password?
+                </button>
               </div>
             )}
 

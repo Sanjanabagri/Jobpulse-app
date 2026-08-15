@@ -13,6 +13,7 @@ export const EDGE_FUNCTIONS = {
   fetchJobs: `${supabaseUrl}/functions/v1/fetch-jobs`,
   dailyDigest: `${supabaseUrl}/functions/v1/daily-digest`,
   agent: `${supabaseUrl}/functions/v1/agent`,
+  passwordReset: `${supabaseUrl}/functions/v1/password-reset`,
 } as const;
 
 export function edgeHeaders(): Record<string, string> {
