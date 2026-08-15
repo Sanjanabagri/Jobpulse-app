@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   User, LogOut, ChevronDown, CheckCircle2, Award, MapPin, Target,
-  Settings, Bookmark, Eye, Briefcase, Zap, Star, Users,
+  Settings, Bookmark, Eye, Briefcase, Zap, Star, Users, Building2, Bell, Send,
 } from 'lucide-react';
 import type { Profile, Domain } from '@/types';
 import { DomainIcon } from './DomainIcon';
@@ -11,7 +11,7 @@ interface ProfileMenuProps {
   domains: Domain[];
   onSignOut: () => void;
   onEditProfile: () => void;
-  onNavigate?: (tab: 'feedback' | 'teams') => void;
+  onNavigate?: (tab: 'feedback' | 'teams' | 'saved' | 'applications' | 'employer' | 'notifications') => void;
 }
 
 type View = 'menu' | 'profile';
@@ -89,18 +89,32 @@ export function ProfileMenu({ profile, domains, onSignOut, onEditProfile, onNavi
                 Edit Profile
               </button>
               <button
-                onClick={() => { onEditProfile(); setOpen(false); }}
+                onClick={() => { onNavigate?.('saved'); setOpen(false); }}
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
               >
                 <Bookmark className="h-4 w-4 text-slate-400" />
                 Saved Jobs
               </button>
               <button
-                onClick={() => { onEditProfile(); setOpen(false); }}
+                onClick={() => { onNavigate?.('applications'); setOpen(false); }}
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
               >
-                <Settings className="h-4 w-4 text-slate-400" />
-                Settings
+                <Send className="h-4 w-4 text-slate-400" />
+                Applications
+              </button>
+              <button
+                onClick={() => { onNavigate?.('employer'); setOpen(false); }}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
+              >
+                <Building2 className="h-4 w-4 text-slate-400" />
+                Employer Dashboard
+              </button>
+              <button
+                onClick={() => { onNavigate?.('notifications'); setOpen(false); }}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
+              >
+                <Bell className="h-4 w-4 text-slate-400" />
+                Notifications
               </button>
               <div className="my-1 border-t border-slate-100" />
               <button

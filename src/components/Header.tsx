@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { EDGE_FUNCTIONS } from '@/lib/supabase';
 import { triggerEdgeFunction } from '@/lib/utils';
 import { ProfileMenu } from './ProfileMenu';
+import { useNotifications } from '@/hooks/useNotifications';
 import type { Profile, Domain } from '@/types';
 
 interface HeaderProps {
@@ -13,12 +14,13 @@ interface HeaderProps {
   domains: Domain[];
   onSignOut: () => void;
   onEditProfile: () => void;
-  onNavigate?: (tab: 'feedback' | 'teams') => void;
+  onNavigate?: (tab: 'feedback' | 'teams' | 'saved' | 'applications' | 'employer' | 'notifications') => void;
 }
 
 export function Header({ onSubscribe, onRefresh, subscriberCount, profile, domains, onSignOut, onEditProfile, onNavigate }: HeaderProps) {
   const [fetching, setFetching] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const { unreadCount } = useNotifications();
 
   async function handleFetch() {
     setFetching(true);
@@ -73,6 +75,20 @@ export function Header({ onSubscribe, onRefresh, subscriberCount, profile, domai
             >
               <Bell className="h-4 w-4" />
               <span className="hidden sm:inline">Subscribe</span>
+            </button>
+          )}
+
+          {profile && (
+            <button
+              onClick={() => onNavigate?.('notifications')}
+              className="relative inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+            >
+              <Bell className="h-4 w-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
           )}
 

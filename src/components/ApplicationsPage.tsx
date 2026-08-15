@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Loader2, Briefcase, Building2, MapPin, ExternalLink, Clock, X } from 'lucide-react';
 import { useJobApplications } from '@/hooks/useApplications';
 import { timeAgo } from '@/lib/utils';
@@ -155,5 +156,3 @@ function ApplicationCard({
     </div>
   );
 }
-
-import { useState } from 'react';

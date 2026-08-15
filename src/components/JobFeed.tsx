@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Loader2, Inbox, Menu, Search, ArrowUpDown, ShieldCheck, Info } from 'lucide-react';
+import { Loader2, Inbox, Menu, Search, ArrowUpDown, ShieldCheck, Info, SlidersHorizontal, X } from 'lucide-react';
 import type { JobPosting, Domain } from '@/types';
 import { JobCard } from './JobCard';
 
@@ -29,6 +29,14 @@ interface JobFeedProps {
 export function JobFeed({ jobs, loading, error, selectedDomain, onOpenSidebar, searchQuery, onSearchChange, userId, hasProfile }: JobFeedProps) {
   const [sortKey, setSortKey] = useState<SortKey>('newest');
   const [sortOpen, setSortOpen] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [remoteOnly, setRemoteOnly] = useState(false);
+  const [jobType, setJobType] = useState<string>('all');
+  const [freshness, setFreshness] = useState<string>('all');
+  const [hasSalary, setHasSalary] = useState(false);
+  const [minTrust, setMinTrust] = useState(0);
+
+  const activeFilterCount = (remoteOnly ? 1 : 0) + (jobType !== 'all' ? 1 : 0) + (freshness !== 'all' ? 1 : 0) + (hasSalary ? 1 : 0) + (minTrust > 0 ? 1 : 0);
 
   const filtered = useMemo(() => {
     let result = searchQuery.trim()
@@ -37,6 +45,12 @@ export function JobFeed({ jobs, loading, error, selectedDomain, onOpenSidebar, s
             .toLowerCase().includes(searchQuery.toLowerCase())
         )
       : jobs;
+
+    if (remoteOnly) result = result.filter((j) => j.is_remote);
+    if (jobType !== 'all') result = result.filter((j) => j.job_type === jobType);
+    if (freshness !== 'all') result = result.filter((j) => j.freshness_label === freshness);
+    if (hasSalary) result = result.filter((j) => j.has_salary || (j.salary_min !== null && j.salary_min !== undefined));
+    if (minTrust > 0) result = result.filter((j) => j.trust_score >= minTrust);
 
     result = [...result];
     switch (sortKey) {
@@ -53,7 +67,7 @@ export function JobFeed({ jobs, loading, error, selectedDomain, onOpenSidebar, s
         result.sort((a, b) => new Date(b.posted_at || 0).getTime() - new Date(a.posted_at || 0).getTime());
     }
     return result;
-  }, [jobs, searchQuery, sortKey]);
+  }, [jobs, searchQuery, sortKey, remoteOnly, jobType, freshness, hasSalary, minTrust]);
 
   return (
     <div className="min-h-full">
@@ -106,6 +120,20 @@ export function JobFeed({ jobs, loading, error, selectedDomain, onOpenSidebar, s
             )}
           </div>
 
+          {/* Filter button */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+              showFilters || activeFilterCount > 0 ? 'border-sky-300 bg-sky-50 text-sky-700' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+            }`}
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            <span className="hidden sm:inline">Filters</span>
+            {activeFilterCount > 0 && (
+              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-sky-600 px-1 text-[10px] font-bold text-white">{activeFilterCount}</span>
+            )}
+          </button>
+
           <div className="hidden items-center gap-2 text-sm text-slate-500 lg:flex">
             <span className="font-semibold text-slate-900">{filtered.length}</span>
             {selectedDomain ? `${selectedDomain.name} jobs` : 'jobs total'}
@@ -140,6 +168,81 @@ export function JobFeed({ jobs, loading, error, selectedDomain, onOpenSidebar, s
             <span className="ml-auto hidden text-slate-400 sm:inline">Match scores based on your profile skills</span>
           )}
         </div>
+
+        {/* Advanced filters panel */}
+        {showFilters && (
+          <div className="border-t border-slate-200 bg-slate-50/50 px-4 py-3 sm:px-6 lg:px-8">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Remote only */}
+              <button
+                onClick={() => setRemoteOnly(!remoteOnly)}
+                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
+                  remoteOnly ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${remoteOnly ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                Remote only
+              </button>
+
+              {/* Job type */}
+              <select
+                value={jobType}
+                onChange={(e) => setJobType(e.target.value)}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 focus:border-sky-400 focus:outline-none"
+              >
+                <option value="all">All job types</option>
+                <option value="full-time">Full-time</option>
+                <option value="part-time">Part-time</option>
+                <option value="contract">Contract</option>
+                <option value="internship">Internship</option>
+                <option value="freelance">Freelance</option>
+              </select>
+
+              {/* Freshness */}
+              <select
+                value={freshness}
+                onChange={(e) => setFreshness(e.target.value)}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 focus:border-sky-400 focus:outline-none"
+              >
+                <option value="all">All freshness</option>
+                <option value="fresh">Fresh</option>
+                <option value="active">Active</option>
+                <option value="aging">Aging</option>
+                <option value="stale">Stale</option>
+              </select>
+
+              {/* Has salary */}
+              <button
+                onClick={() => setHasSalary(!hasSalary)}
+                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
+                  hasSalary ? 'border-sky-300 bg-sky-50 text-sky-700' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                Salary listed
+              </button>
+
+              {/* Min trust */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-slate-500">Min trust:</span>
+                <input
+                  type="range" min="0" max="100" step="25" value={minTrust}
+                  onChange={(e) => setMinTrust(parseInt(e.target.value))}
+                  className="h-1.5 w-24 cursor-pointer appearance-none rounded-full bg-slate-200 accent-sky-500"
+                />
+                <span className="text-xs font-bold text-slate-700">{minTrust}</span>
+              </div>
+
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={() => { setRemoteOnly(false); setJobType('all'); setFreshness('all'); setHasSalary(false); setMinTrust(0); }}
+                  className="ml-auto flex items-center gap-1 text-xs font-medium text-red-500 transition hover:text-red-600"
+                >
+                  <X className="h-3 w-3" /> Clear all
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="p-4 sm:px-6 lg:px-8">

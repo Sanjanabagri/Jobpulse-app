@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Briefcase, CalendarClock, Sparkles, MessageCircle, Star, Users } from 'lucide-react';
+import { Briefcase, CalendarClock, Sparkles, MessageCircle, Star, Users, Bookmark, Send, Building2, Bell } from 'lucide-react';
 import { SplashScreen } from '@/components/SplashScreen';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
@@ -10,13 +10,17 @@ import { SubscribeModal } from '@/components/SubscribeModal';
 import { FeedbackPage } from '@/components/FeedbackPage';
 import { TeamsPage } from '@/components/TeamsPage';
 import { DigestView } from '@/components/DigestView';
+import { SavedJobsPage } from '@/components/SavedJobsPage';
+import { ApplicationsPage } from '@/components/ApplicationsPage';
+import { EmployerPage } from '@/components/EmployerPage';
+import { NotificationsPage } from '@/components/NotificationsPage';
 import { AuthPage } from '@/components/AuthPage';
 import { ProfileOnboarding } from '@/components/ProfileOnboarding';
 import { EditProfileModal } from '@/components/EditProfileModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useDomains, useJobPostings, useDailyDigests, useSubscriberCount } from '@/hooks/useData';
 
-type Tab = 'jobs' | 'triggers' | 'feedback' | 'teams';
+type Tab = 'jobs' | 'triggers' | 'feedback' | 'teams' | 'saved' | 'applications' | 'employer' | 'notifications';
 
 function App() {
   const auth = useAuth();
@@ -97,42 +101,27 @@ function App() {
 
         <main className="min-h-[calc(100vh-4rem)] flex-1 lg:w-[calc(100%-18rem)]">
           {/* Tab bar */}
-          <div className="sticky top-16 z-10 flex items-center gap-1 border-b border-slate-200 bg-white/80 px-4 py-2 backdrop-blur-xl sm:px-6 lg:px-8">
-            <button
-              onClick={() => setActiveTab('jobs')}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                activeTab === 'jobs' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Briefcase className="h-4 w-4" />
-              Job Feed
+          <div className="sticky top-16 z-10 flex items-center gap-1 overflow-x-auto border-b border-slate-200 bg-white/80 px-4 py-2 backdrop-blur-xl sm:px-6 lg:px-8">
+            <button onClick={() => setActiveTab('jobs')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'jobs' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+              <Briefcase className="h-4 w-4" /> Job Feed
             </button>
-            <button
-              onClick={() => setActiveTab('triggers')}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                activeTab === 'triggers' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <CalendarClock className="h-4 w-4" />
-              Daily Triggers
+            <button onClick={() => setActiveTab('saved')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'saved' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+              <Bookmark className="h-4 w-4" /> Saved
             </button>
-            <button
-              onClick={() => setActiveTab('teams')}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                activeTab === 'teams' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Users className="h-4 w-4" />
-              Teams
+            <button onClick={() => setActiveTab('applications')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'applications' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+              <Send className="h-4 w-4" /> Applications
             </button>
-            <button
-              onClick={() => setActiveTab('feedback')}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                activeTab === 'feedback' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Star className="h-4 w-4" />
-              Feedback
+            <button onClick={() => setActiveTab('employer')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'employer' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+              <Building2 className="h-4 w-4" /> Employer
+            </button>
+            <button onClick={() => setActiveTab('triggers')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'triggers' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+              <CalendarClock className="h-4 w-4" /> Triggers
+            </button>
+            <button onClick={() => setActiveTab('teams')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'teams' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+              <Users className="h-4 w-4" /> Teams
+            </button>
+            <button onClick={() => setActiveTab('feedback')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'feedback' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+              <Star className="h-4 w-4" /> Feedback
             </button>
           </div>
 
@@ -150,6 +139,14 @@ function App() {
               userId={userId}
               hasProfile={!!auth.profile}
             />
+          ) : activeTab === 'saved' ? (
+            <SavedJobsPage />
+          ) : activeTab === 'applications' ? (
+            <ApplicationsPage />
+          ) : activeTab === 'employer' ? (
+            <EmployerPage domains={domains} />
+          ) : activeTab === 'notifications' ? (
+            <NotificationsPage />
           ) : activeTab === 'triggers' ? (
             <DigestView digests={digests} loading={digestsLoading} />
           ) : activeTab === 'teams' ? (
