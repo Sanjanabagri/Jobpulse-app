@@ -40,9 +40,10 @@ function TrustBadge({ score }: { score: number }) {
 interface JobCardProps {
   job: JobPosting;
   userId?: string;
+  onClick?: (job: JobPosting) => void;
 }
 
-export function JobCard({ job, userId }: JobCardProps) {
+export function JobCard({ job, userId, onClick }: JobCardProps) {
   const domain = job.domains;
   const freshness = FRESHNESS_CONFIG[job.freshness_label] || FRESHNESS_CONFIG.active;
   const [saved, setSaved] = useState(job.is_saved || false);
@@ -62,7 +63,10 @@ export function JobCard({ job, userId }: JobCardProps) {
   }
 
   return (
-    <article className="group relative rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/50">
+    <article
+      onClick={() => onClick?.(job)}
+      className={`group relative rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/50 ${onClick ? 'cursor-pointer' : ''}`}
+    >
       <div className="flex items-start gap-4">
         {job.company_logo ? (
           <img

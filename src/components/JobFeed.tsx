@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Loader2, Inbox, Menu, Search, ArrowUpDown, ShieldCheck, Info, SlidersHorizontal, X } from 'lucide-react';
 import type { JobPosting, Domain } from '@/types';
 import { JobCard } from './JobCard';
+import { JobDetailDrawer } from './JobDetailDrawer';
 
 type SortKey = 'newest' | 'trust' | 'freshness' | 'match';
 
@@ -30,6 +31,7 @@ export function JobFeed({ jobs, loading, error, selectedDomain, onOpenSidebar, s
   const [sortKey, setSortKey] = useState<SortKey>('newest');
   const [sortOpen, setSortOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [jobType, setJobType] = useState<string>('all');
   const [freshness, setFreshness] = useState<string>('all');
@@ -269,11 +271,18 @@ export function JobFeed({ jobs, loading, error, selectedDomain, onOpenSidebar, s
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
             {filtered.map((job) => (
-              <JobCard key={job.id} job={job} userId={userId} />
+              <JobCard key={job.id} job={job} userId={userId} onClick={setSelectedJob} />
             ))}
           </div>
         )}
       </div>
+
+      <JobDetailDrawer
+        job={selectedJob}
+        isOpen={!!selectedJob}
+        onClose={() => setSelectedJob(null)}
+        userId={userId}
+      />
     </div>
   );
 }

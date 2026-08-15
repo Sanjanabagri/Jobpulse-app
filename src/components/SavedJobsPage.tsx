@@ -4,11 +4,13 @@ import { useJobPostings } from '@/hooks/useData';
 import { useAuth } from '@/hooks/useAuth';
 import type { JobPosting } from '@/types';
 import { timeAgo } from '@/lib/utils';
+import { JobDetailDrawer } from './JobDetailDrawer';
 
 export function SavedJobsPage() {
   const auth = useAuth();
   const { jobs, loading, toggleSave } = useJobPostings(null, auth.profile);
   const [search, setSearch] = useState('');
+  const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
 
   const savedJobs = jobs.filter((j) => j.is_saved);
   const filtered = savedJobs.filter((j) =>
@@ -54,17 +56,24 @@ export function SavedJobsPage() {
       ) : (
         <div className="space-y-3">
           {filtered.map((job) => (
-            <SavedJobCard key={job.id} job={job} onRemove={() => toggleSave(job.id, true)} />
+            <SavedJobCard key={job.id} job={job} onRemove={() => toggleSave(job.id, true)} onClick={() => setSelectedJob(job)} />
           ))}
         </div>
       )}
+
+      <JobDetailDrawer
+        job={selectedJob}
+        isOpen={!!selectedJob}
+        onClose={() => setSelectedJob(null)}
+        userId={auth.user?.id}
+      />
     </div>
   );
 }
 
-function SavedJobCard({ job, onRemove }: { job: JobPosting; onRemove: () => void }) {
+function SavedJobCard({ job, onRemove, onClick }: { job: JobPosting; onRemove: () => void; onClick: () => void }) {
   return (
-    <div className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-sky-200 hover:shadow-md">
+    <div onClick={onClick} className="group cursor-pointer rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-sky-200 hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-slate-900">{job.title}</h3>

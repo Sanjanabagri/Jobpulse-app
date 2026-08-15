@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Loader2, Briefcase, Building2, MapPin, ExternalLink, Clock, X } from 'lucide-react';
+import { Loader2, Briefcase, Building2, MapPin, ExternalLink, Clock, X, Eye } from 'lucide-react';
 import { useJobApplications } from '@/hooks/useApplications';
+import { useAuth } from '@/hooks/useAuth';
 import { timeAgo } from '@/lib/utils';
-import type { ApplicationStatus, JobApplication } from '@/types';
+import type { ApplicationStatus, JobApplication, JobPosting } from '@/types';
+import { JobDetailDrawer } from './JobDetailDrawer';
 
 const STATUS_CONFIG: Record<ApplicationStatus, { label: string; color: string; dot: string }> = {
   applied: { label: 'Applied', color: 'text-sky-700 bg-sky-50 border-sky-200', dot: 'bg-sky-500' },
@@ -17,6 +19,8 @@ const STATUS_FLOW: ApplicationStatus[] = ['applied', 'reviewing', 'interview', '
 
 export function ApplicationsPage() {
   const { applications, loading, updateStatus, withdrawApplication } = useJobApplications();
+  const auth = useAuth();
+  const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
 
   const stats = {
     total: applications.length,
@@ -62,10 +66,18 @@ export function ApplicationsPage() {
               app={app}
               onStatusChange={(status) => updateStatus(app.id, status)}
               onWithdraw={() => withdrawApplication(app.id)}
+              onViewDetails={() => setSelectedJob(app.job_postings ?? null)}
             />
           ))}
         </div>
       )}
+
+      <JobDetailDrawer
+        job={selectedJob}
+        isOpen={!!selectedJob}
+        onClose={() => setSelectedJob(null)}
+        userId={auth.user?.id}
+      />
     </div>
   );
 }
@@ -80,11 +92,12 @@ function StatCard({ label, value, color }: { label: string; value: number; color
 }
 
 function ApplicationCard({
-  app, onStatusChange, onWithdraw,
+  app, onStatusChange, onWithdraw, onViewDetails,
 }: {
   app: JobApplication;
   onStatusChange: (status: ApplicationStatus) => void;
   onWithdraw: () => void;
+  onViewDetails: () => void;
 }) {
   const job = app.job_postings;
   const config = STATUS_CONFIG[app.status];
@@ -115,6 +128,13 @@ function ApplicationCard({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          {job && (
+            <button onClick={onViewDetails}
+              className="rounded-lg p-2 text-slate-400 transition hover:bg-sky-50 hover:text-sky-600"
+              title="View details">
+              <Eye className="h-4 w-4" />
+            </button>
+          )}
           {job?.apply_url && (
             <a href={job.apply_url} target="_blank" rel="noopener noreferrer"
               className="rounded-lg p-2 text-slate-400 transition hover:bg-sky-50 hover:text-sky-600">
