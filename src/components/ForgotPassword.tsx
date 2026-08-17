@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { Zap, Mail, ArrowRight, Loader2, ArrowLeft, KeyRound, ShieldCheck, Lock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Zap, Mail, ArrowRight, Loader2, ArrowLeft, ShieldCheck, Lock, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 interface ForgotPasswordProps {
@@ -7,18 +7,16 @@ interface ForgotPasswordProps {
   onBack: () => void;
 }
 
-type Step = 'email' | 'otp' | 'done';
+type Step = 'email' | 'reset' | 'done';
 
 export function ForgotPassword({ auth, onBack }: ForgotPasswordProps) {
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(0);
-  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     if (secondsLeft <= 0) return;
@@ -26,56 +24,31 @@ export function ForgotPassword({ auth, onBack }: ForgotPasswordProps) {
     return () => clearInterval(t);
   }, [secondsLeft]);
 
-  async function handleSendOtp(e: React.FormEvent) {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('reset') === 'true') {
+      setStep('reset');
+    }
+  }, []);
+
+  async function handleSendEmail(e: React.FormEvent) {
     e.preventDefault();
     if (!email.trim()) return;
     setLoading(true);
     setError('');
     try {
       await auth.sendResetOTP(email.trim());
-      setStep('otp');
+      setStep('reset');
       setSecondsLeft(60);
-      setTimeout(() => otpRefs.current[0]?.focus(), 100);
     } catch (err: any) {
-      setError(err.message || 'Failed to send OTP');
+      setError(err.message || 'Failed to send reset email');
     } finally {
       setLoading(false);
     }
   }
 
-  function handleOtpChange(index: number, value: string) {
-    if (!/^\d?$/.test(value)) return;
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-    if (value && index < 5) {
-      otpRefs.current[index + 1]?.focus();
-    }
-  }
-
-  function handleOtpKeyDown(index: number, e: React.KeyboardEvent) {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus();
-    }
-  }
-
-  function handleOtpPaste(e: React.ClipboardEvent) {
+  async function handleResetPassword(e: React.FormEvent) {
     e.preventDefault();
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    if (pasted.length > 0) {
-      const newOtp = pasted.split('').concat(Array(6 - pasted.length).fill(''));
-      setOtp(newOtp);
-      otpRefs.current[Math.min(pasted.length, 5)]?.focus();
-    }
-  }
-
-  async function handleVerifyAndReset(e: React.FormEvent) {
-    e.preventDefault();
-    const otpCode = otp.join('');
-    if (otpCode.length !== 6) {
-      setError('Enter the 6-digit code');
-      return;
-    }
     if (newPassword.length < 6) {
       setError('Password must be at least 6 characters');
       return;
@@ -87,10 +60,13 @@ export function ForgotPassword({ auth, onBack }: ForgotPasswordProps) {
     setLoading(true);
     setError('');
     try {
-      await auth.verifyOTPAndReset(email.trim(), otpCode, newPassword);
+      await auth.verifyOTPAndReset('', '', newPassword);
       setStep('done');
+      const url = new URL(window.location.href);
+      url.searchParams.delete('reset');
+      window.history.replaceState({}, '', url.toString());
     } catch (err: any) {
-      setError(err.message || 'Failed to reset password');
+      setError(err.message || 'Failed to reset password. Click the link in your email first.');
     } finally {
       setLoading(false);
     }
@@ -103,9 +79,8 @@ export function ForgotPassword({ auth, onBack }: ForgotPasswordProps) {
     try {
       await auth.sendResetOTP(email.trim());
       setSecondsLeft(60);
-      setOtp(['', '', '', '', '', '']);
     } catch (err: any) {
-      setError(err.message || 'Failed to resend OTP');
+      setError(err.message || 'Failed to resend email');
     } finally {
       setLoading(false);
     }
@@ -131,10 +106,10 @@ export function ForgotPassword({ auth, onBack }: ForgotPasswordProps) {
               </div>
               <h1 className="mt-5 text-center text-xl font-bold text-slate-900">Forgot password?</h1>
               <p className="mt-2 text-center text-sm text-slate-600">
-                Enter your email and we'll send you a 6-digit verification code.
+                Enter your email and we'll send you a secure link to reset your password.
               </p>
 
-              <form onSubmit={handleSendOtp} className="mt-6 space-y-4">
+              <form onSubmit={handleSendEmail} className="mt-6 space-y-4">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-slate-700">Email</label>
                   <div className="relative">
@@ -160,9 +135,9 @@ export function ForgotPassword({ auth, onBack }: ForgotPasswordProps) {
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 active:scale-[0.98] disabled:opacity-50"
                 >
                   {loading ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" /> Sending code...</>
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Sending link...</>
                   ) : (
-                    <>Send code <ArrowRight className="h-4 w-4" /></>
+                    <>Send reset link <ArrowRight className="h-4 w-4" /></>
                   )}
                 </button>
               </form>
@@ -176,39 +151,22 @@ export function ForgotPassword({ auth, onBack }: ForgotPasswordProps) {
             </>
           )}
 
-          {/* Step: OTP + New Password */}
-          {step === 'otp' && (
+          {/* Step: Reset (after clicking email link or waiting) */}
+          {step === 'reset' && (
             <>
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-50">
-                <KeyRound className="h-8 w-8 text-sky-600" />
+                <Lock className="h-8 w-8 text-sky-600" />
               </div>
-              <h1 className="mt-5 text-center text-xl font-bold text-slate-900">Enter verification code</h1>
+              <h1 className="mt-5 text-center text-xl font-bold text-slate-900">Set new password</h1>
               <p className="mt-2 text-center text-sm text-slate-600">
-                We sent a 6-digit code to
+                {email ? (
+                  <>We sent a reset link to <span className="font-semibold text-slate-900">{email}</span>. Click the link in the email, then set your new password below.</>
+                ) : (
+                  <>Click the link in your email, then enter your new password below.</>
+                )}
               </p>
-              <p className="mt-0.5 text-center font-semibold text-slate-900">{email}</p>
 
-              <form onSubmit={handleVerifyAndReset} className="mt-6 space-y-5">
-                {/* OTP inputs */}
-                <div>
-                  <div className="flex justify-center gap-2" onPaste={handleOtpPaste}>
-                    {otp.map((digit, i) => (
-                      <input
-                        key={i}
-                        ref={(el) => { otpRefs.current[i] = el; }}
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => handleOtpChange(i, e.target.value)}
-                        onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                        className="h-12 w-12 rounded-xl border border-slate-200 bg-white text-center text-lg font-bold text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* New password */}
+              <form onSubmit={handleResetPassword} className="mt-6 space-y-5">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-slate-700">New password</label>
                   <div className="relative">
@@ -225,7 +183,6 @@ export function ForgotPassword({ auth, onBack }: ForgotPasswordProps) {
                   </div>
                 </div>
 
-                {/* Confirm password */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-slate-700">Confirm password</label>
                   <div className="relative">
@@ -252,7 +209,7 @@ export function ForgotPassword({ auth, onBack }: ForgotPasswordProps) {
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 active:scale-[0.98] disabled:opacity-50"
                 >
                   {loading ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" /> Verifying...</>
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Updating...</>
                   ) : (
                     <>Reset password <ArrowRight className="h-4 w-4" /></>
                   )}
@@ -260,22 +217,24 @@ export function ForgotPassword({ auth, onBack }: ForgotPasswordProps) {
               </form>
 
               {/* Resend */}
-              <div className="mt-4 text-center">
-                {secondsLeft > 0 ? (
-                  <p className="text-sm text-slate-400">Resend code in {secondsLeft}s</p>
-                ) : (
-                  <button
-                    onClick={handleResend}
-                    disabled={loading}
-                    className="text-sm font-medium text-sky-600 transition hover:text-sky-700 disabled:opacity-50"
-                  >
-                    Resend code
-                  </button>
-                )}
-              </div>
+              {email && (
+                <div className="mt-4 text-center">
+                  {secondsLeft > 0 ? (
+                    <p className="text-sm text-slate-400">Resend link in {secondsLeft}s</p>
+                  ) : (
+                    <button
+                      onClick={handleResend}
+                      disabled={loading}
+                      className="text-sm font-medium text-sky-600 transition hover:text-sky-700 disabled:opacity-50"
+                    >
+                      Resend reset link
+                    </button>
+                  )}
+                </div>
+              )}
 
               <button
-                onClick={() => { setStep('email'); setError(''); setOtp(['', '', '', '', '', '']); }}
+                onClick={() => { setStep('email'); setError(''); }}
                 className="mt-3 flex w-full items-center justify-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-700"
               >
                 <ArrowLeft className="h-4 w-4" /> Change email
@@ -287,7 +246,7 @@ export function ForgotPassword({ auth, onBack }: ForgotPasswordProps) {
           {step === 'done' && (
             <>
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50">
-                <ShieldCheck className="h-8 w-8 text-emerald-600" />
+                <CheckCircle2 className="h-8 w-8 text-emerald-600" />
               </div>
               <h1 className="mt-5 text-center text-xl font-bold text-slate-900">Password reset!</h1>
               <p className="mt-2 text-center text-sm text-slate-600">
@@ -303,6 +262,11 @@ export function ForgotPassword({ auth, onBack }: ForgotPasswordProps) {
             </>
           )}
         </div>
+
+        <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-slate-400">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          Your password is securely reset via Supabase Auth
+        </p>
       </div>
     </div>
   );

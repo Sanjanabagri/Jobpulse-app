@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Briefcase, CalendarClock, Sparkles, MessageCircle, Star, Users, Bookmark, Send, Building2, Bell } from 'lucide-react';
 import { SplashScreen } from '@/components/SplashScreen';
 import { Header } from '@/components/Header';
@@ -17,6 +17,7 @@ import { NotificationsPage } from '@/components/NotificationsPage';
 import { AuthPage } from '@/components/AuthPage';
 import { ProfileOnboarding } from '@/components/ProfileOnboarding';
 import { EditProfileModal } from '@/components/EditProfileModal';
+import { ForgotPassword } from '@/components/ForgotPassword';
 import { useAuth } from '@/hooks/useAuth';
 import { useDomains, useJobPostings, useDailyDigests, useSubscriberCount } from '@/hooks/useData';
 
@@ -33,11 +34,35 @@ function App() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showSplash, setShowSplash] = useState(true);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [isResetMode, setIsResetMode] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('reset') === 'true') {
+      setIsResetMode(true);
+      setShowSplash(false);
+    }
+  }, []);
 
   const { domains } = useDomains();
   const subscriberCount = useSubscriberCount();
   const { jobs, loading, error, refetch } = useJobPostings(selectedDomainSlug, auth.profile);
   const { digests, loading: digestsLoading } = useDailyDigests();
+
+  // Password reset flow — bypass everything else
+  if (isResetMode) {
+    return (
+      <ForgotPassword
+        auth={auth}
+        onBack={() => {
+          setIsResetMode(false);
+          const url = new URL(window.location.href);
+          url.searchParams.delete('reset');
+          window.history.replaceState({}, '', url.toString());
+        }}
+      />
+    );
+  }
 
   // Splash screen on app open
   if (showSplash) {

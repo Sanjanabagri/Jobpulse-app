@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase, EDGE_FUNCTIONS, edgeHeaders } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import type { Profile } from '@/types';
 
 export function useAuth() {
@@ -80,29 +80,16 @@ export function useAuth() {
   }, []);
 
   const sendResetOTP = useCallback(async (email: string) => {
-    const res = await fetch(EDGE_FUNCTIONS.passwordReset, {
-      method: 'POST',
-      headers: edgeHeaders(),
-      body: JSON.stringify({ action: 'send_otp', email }),
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/?reset=true`,
     });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({ error: 'Failed to send OTP' }));
-      throw new Error(data.error || 'Failed to send OTP');
-    }
-    return res.json();
+    if (error) throw error;
   }, []);
 
   const verifyOTPAndReset = useCallback(async (email: string, otp: string, newPassword: string) => {
-    const res = await fetch(EDGE_FUNCTIONS.passwordReset, {
-      method: 'POST',
-      headers: edgeHeaders(),
-      body: JSON.stringify({ action: 'verify_otp', email, otp, newPassword }),
-    });
-    const data = await res.json().catch(() => ({ error: 'Failed to reset password' }));
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to reset password');
-    }
-    return data;
+    void email; void otp;
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
   }, []);
 
   const refreshProfile = useCallback(async () => {
