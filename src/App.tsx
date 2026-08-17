@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Briefcase, CalendarClock, Sparkles, MessageCircle, Star, Users, Bookmark, Send, Building2, Bell } from 'lucide-react';
+import { Briefcase, CalendarClock, Sparkles, MessageCircle, Star, Users, Bookmark, Send, Building2, Bell, BarChart3 } from 'lucide-react';
 import { SplashScreen } from '@/components/SplashScreen';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
@@ -18,10 +18,12 @@ import { AuthPage } from '@/components/AuthPage';
 import { ProfileOnboarding } from '@/components/ProfileOnboarding';
 import { EditProfileModal } from '@/components/EditProfileModal';
 import { ForgotPassword } from '@/components/ForgotPassword';
+import { AdminOverviewPage } from '@/components/AdminOverviewPage';
 import { useAuth } from '@/hooks/useAuth';
 import { useDomains, useJobPostings, useDailyDigests, useSubscriberCount } from '@/hooks/useData';
+import { trackVisit } from '@/hooks/useAdminStats';
 
-type Tab = 'jobs' | 'triggers' | 'feedback' | 'teams' | 'saved' | 'applications' | 'employer' | 'notifications';
+type Tab = 'jobs' | 'triggers' | 'feedback' | 'teams' | 'saved' | 'applications' | 'employer' | 'notifications' | 'admin';
 
 function App() {
   const auth = useAuth();
@@ -43,6 +45,37 @@ function App() {
       setShowSplash(false);
     }
   }, []);
+
+  // Track visits and sign-ins
+  useEffect(() => {
+    if (auth.loading || isResetMode || showSplash) return;
+    if (auth.isAuthenticated && auth.user) {
+      trackVisit({
+        userId: auth.user.id,
+        userEmail: auth.user.email,
+        userName: auth.profile?.full_name,
+        isSignin: true,
+        page: activeTab,
+      });
+    } else if (!auth.isAuthenticated) {
+      trackVisit({ isSignin: false, page: 'auth' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.isAuthenticated, auth.loading, isResetMode, showSplash]);
+
+  // Track page changes
+  useEffect(() => {
+    if (auth.isAuthenticated && !auth.loading && !showSplash && !isResetMode) {
+      trackVisit({
+        userId: auth.user?.id,
+        userEmail: auth.user?.email,
+        userName: auth.profile?.full_name,
+        isSignin: false,
+        page: activeTab,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const { domains } = useDomains();
   const subscriberCount = useSubscriberCount();
@@ -148,6 +181,9 @@ function App() {
             <button onClick={() => setActiveTab('feedback')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'feedback' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
               <Star className="h-4 w-4" /> Feedback
             </button>
+            <button onClick={() => setActiveTab('admin')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'admin' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+              <BarChart3 className="h-4 w-4" /> Admin
+            </button>
           </div>
 
           <StatsBar key={refreshKey} />
@@ -176,6 +212,8 @@ function App() {
             <DigestView digests={digests} loading={digestsLoading} />
           ) : activeTab === 'teams' ? (
             <TeamsPage />
+          ) : activeTab === 'admin' ? (
+            <AdminOverviewPage />
           ) : (
             <FeedbackPage />
           )}

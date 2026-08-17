@@ -272,3 +272,23 @@ export interface ExtendedProfile extends Profile {
   is_employer?: boolean;
   company_profile_id?: string | null;
 }
+
+// ============ VISITOR SESSIONS ============
+
+export interface VisitorSession {
+  id: string;
+  user_id: string | null;
+  session_id: string | null;
+  user_email: string | null;
+  user_name: string | null;
+  is_signin: boolean;
+  page: string | null;
+  created_at: string;
+}
+
+// ============ ADMIN FEEDBACK (with profile info) ============
+
+export interface AdminFeedback extends Feedback {
+  user_email?: string | null;
+  user_name?: string | null;
+}
