@@ -20,7 +20,7 @@ const STATUS_STYLES: Record<FeedbackStatus, { label: string; icon: typeof Clock;
   resolved: { label: 'Resolved', icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
 };
 
-export function FeedbackPage() {
+export function FeedbackPage({ isAdmin = false }: { isAdmin?: boolean }) {
   const { feedback, loading, submitFeedback, deleteFeedback } = useUserFeedback();
   const { myRating, average, count, submitRating } = useAppRating();
 
@@ -219,7 +219,12 @@ export function FeedbackPage() {
 
       {/* Previous Feedback */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-lg font-semibold text-slate-900">Your Feedback History</h3>
+        <h3 className="mb-4 text-lg font-semibold text-slate-900">
+          {isAdmin ? 'All User Feedback' : 'Your Feedback History'}
+          {isAdmin && feedback.length > 0 && (
+            <span className="ml-2 rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700">{feedback.length}</span>
+          )}
+        </h3>
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-slate-300" />
@@ -245,6 +250,11 @@ export function FeedbackPage() {
                         <p className="truncate text-sm font-semibold text-slate-900">{item.subject}</p>
                       </div>
                       <p className="mt-1.5 text-sm text-slate-600">{item.message}</p>
+                      {isAdmin && (
+                        <p className="mt-1 text-xs font-medium text-slate-400">
+                          From user: {item.user_id.slice(0, 8)}...
+                        </p>
+                      )}
                       <div className="mt-2 flex items-center gap-2">
                         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${status.color}`}>
                           <StatusIcon className="h-3 w-3" />

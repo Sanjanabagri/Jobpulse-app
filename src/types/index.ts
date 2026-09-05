@@ -271,6 +271,7 @@ export interface ExtendedProfile extends Profile {
   resume_url?: string | null;
   is_employer?: boolean;
   company_profile_id?: string | null;
+  is_admin?: boolean;
 }
 
 // ============ VISITOR SESSIONS ============

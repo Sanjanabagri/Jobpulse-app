@@ -15,9 +15,10 @@ interface HeaderProps {
   onSignOut: () => void;
   onEditProfile: () => void;
   onNavigate?: (tab: 'feedback' | 'teams' | 'saved' | 'applications' | 'employer' | 'notifications') => void;
+  isAdmin?: boolean;
 }
 
-export function Header({ onSubscribe, onRefresh, subscriberCount, profile, domains, onSignOut, onEditProfile, onNavigate }: HeaderProps) {
+export function Header({ onSubscribe, onRefresh, subscriberCount, profile, domains, onSignOut, onEditProfile, onNavigate, isAdmin }: HeaderProps) {
   const [fetching, setFetching] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const { unreadCount } = useNotifications();
@@ -45,7 +46,14 @@ export function Header({ onSubscribe, onRefresh, subscriberCount, profile, domai
             <Zap className="h-5 w-5 text-white" fill="white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-tight text-slate-900">JobPulse</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-bold tracking-tight text-slate-900">JobPulse</h1>
+              {isAdmin && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-bold text-white">
+                  ADMIN
+                </span>
+              )}
+            </div>
             <p className="hidden text-xs text-slate-500 sm:block">Verified jobs. Trust scores. AI matching.</p>
           </div>
         </div>

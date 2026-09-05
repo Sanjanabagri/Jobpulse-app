@@ -105,6 +105,24 @@ export function AuthPage({ auth }: AuthPageProps) {
         <p className="relative z-10 text-sm text-slate-500">
           81% of Indian recruiters admit to posting ghost jobs. We're fixing that.
         </p>
+
+        {/* Trust stats */}
+        <div className="relative z-10 flex items-center gap-6 border-t border-white/10 pt-6">
+          <div>
+            <p className="text-2xl font-bold text-white">100%</p>
+            <p className="text-xs text-slate-400">Verified listings</p>
+          </div>
+          <div className="h-8 w-px bg-white/10" />
+          <div>
+            <p className="text-2xl font-bold text-white">0-100</p>
+            <p className="text-xs text-slate-400">Trust score</p>
+          </div>
+          <div className="h-8 w-px bg-white/10" />
+          <div>
+            <p className="text-2xl font-bold text-white">AI</p>
+            <p className="text-xs text-slate-400">Match scoring</p>
+          </div>
+        </div>
       </div>
 
       {/* Right panel — form */}

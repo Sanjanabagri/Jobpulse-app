@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Profile } from '@/types';
+import type { ExtendedProfile } from '@/types';
 
 export function useAuth() {
   const [session, setSession] = useState<any>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<ExtendedProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadProfile = useCallback(async (userId: string) => {
@@ -18,7 +18,7 @@ export function useAuth() {
       console.error('Profile load error:', error.message);
       setProfile(null);
     } else {
-      setProfile(data as Profile);
+      setProfile(data as ExtendedProfile);
     }
   }, []);
 
@@ -105,6 +105,7 @@ export function useAuth() {
     loading,
     isAuthenticated: !!session,
     isProfileComplete: !!profile?.profile_completed,
+    isAdmin: !!profile?.is_admin,
     signUp,
     signIn,
     signOut,

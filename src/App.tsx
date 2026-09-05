@@ -146,6 +146,7 @@ function App() {
         onSignOut={auth.signOut}
         onEditProfile={() => setEditProfileOpen(true)}
         onNavigate={(tab) => setActiveTab(tab)}
+        isAdmin={auth.isAdmin}
       />
 
       <div className="flex">
@@ -181,9 +182,11 @@ function App() {
             <button onClick={() => setActiveTab('feedback')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'feedback' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
               <Star className="h-4 w-4" /> Feedback
             </button>
-            <button onClick={() => setActiveTab('admin')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'admin' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
-              <BarChart3 className="h-4 w-4" /> Admin
-            </button>
+            {auth.isAdmin && (
+              <button onClick={() => setActiveTab('admin')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'admin' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                <BarChart3 className="h-4 w-4" /> Admin
+              </button>
+            )}
           </div>
 
           <StatsBar key={refreshKey} />
@@ -215,7 +218,7 @@ function App() {
           ) : activeTab === 'admin' ? (
             <AdminOverviewPage />
           ) : (
-            <FeedbackPage />
+            <FeedbackPage isAdmin={auth.isAdmin} />
           )}
         </main>
       </div>
