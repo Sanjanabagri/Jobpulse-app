@@ -32,9 +32,12 @@ export function useAuth() {
       }
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
-      if (session?.user) {
+      if (event === 'PASSWORD_RECOVERY') {
+        // Recovery session established — don't load profile, just mark ready
+        setLoading(false);
+      } else if (session?.user) {
         loadProfile(session.user.id);
       } else {
         setProfile(null);
@@ -88,6 +91,11 @@ export function useAuth() {
 
   const verifyOTPAndReset = useCallback(async (email: string, otp: string, newPassword: string) => {
     void email; void otp;
+    // Ensure the recovery session is active before updating
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      throw new Error('Password reset link expired or invalid. Please request a new reset link.');
+    }
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) throw error;
   }, []);

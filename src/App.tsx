@@ -82,8 +82,20 @@ function App() {
   const { jobs, loading, error, refetch } = useJobPostings(selectedDomainSlug, auth.profile);
   const { digests, loading: digestsLoading } = useDailyDigests();
 
-  // Password reset flow — bypass everything else
+  // Password reset flow — wait for auth to load so recovery session is ready
   if (isResetMode) {
+    if (auth.loading) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-slate-50">
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 shadow-lg shadow-sky-500/30">
+              <Sparkles className="h-6 w-6 animate-pulse text-white" />
+            </div>
+            <p className="text-sm text-slate-500">Preparing password reset...</p>
+          </div>
+        </div>
+      );
+    }
     return (
       <ForgotPassword
         auth={auth}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Zap, Mail, ArrowRight, Loader2, ArrowLeft, ShieldCheck, Lock, CheckCircle2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 
 interface ForgotPasswordProps {
@@ -17,6 +18,7 @@ export function ForgotPassword({ auth, onBack }: ForgotPasswordProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(0);
+  const [sessionReady, setSessionReady] = useState(false);
 
   useEffect(() => {
     if (secondsLeft <= 0) return;
@@ -28,6 +30,17 @@ export function ForgotPassword({ auth, onBack }: ForgotPasswordProps) {
     const params = new URLSearchParams(window.location.search);
     if (params.get('reset') === 'true') {
       setStep('reset');
+      // Wait for Supabase recovery session to be established
+      const checkSession = setInterval(async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setSessionReady(true);
+          clearInterval(checkSession);
+        }
+      }, 500);
+      // Timeout after 15 seconds
+      setTimeout(() => clearInterval(checkSession), 15000);
+      return () => clearInterval(checkSession);
     }
   }, []);
 
@@ -161,10 +174,19 @@ export function ForgotPassword({ auth, onBack }: ForgotPasswordProps) {
               <p className="mt-2 text-center text-sm text-slate-600">
                 {email ? (
                   <>We sent a reset link to <span className="font-semibold text-slate-900">{email}</span>. Click the link in the email, then set your new password below.</>
+                ) : sessionReady ? (
+                  <>Enter your new password below.</>
                 ) : (
-                  <>Click the link in your email, then enter your new password below.</>
+                  <>Click the link in your email to verify your identity, then enter your new password below.</>
                 )}
               </p>
+
+              {!sessionReady && (
+                <div className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-sky-50 px-3 py-2 text-sm text-sky-700">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Waiting for email verification...
+                </div>
+              )}
 
               <form onSubmit={handleResetPassword} className="mt-6 space-y-5">
                 <div>
@@ -205,7 +227,7 @@ export function ForgotPassword({ auth, onBack }: ForgotPasswordProps) {
 
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !sessionReady}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 active:scale-[0.98] disabled:opacity-50"
                 >
                   {loading ? (
