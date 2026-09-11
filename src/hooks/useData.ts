@@ -48,7 +48,7 @@ export function useJobPostings(selectedDomainSlug: string | null, profile: Profi
       .from('job_postings')
       .select('*, domains!inner(slug, name, icon, color, description)')
       .order('posted_at', { ascending: false })
-      .limit(120);
+      .limit(200);
 
     if (selectedDomainSlug) {
       const { data: domain } = await supabase

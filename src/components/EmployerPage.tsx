@@ -1,16 +1,22 @@
 import { useState } from 'react';
-import { Loader2, Plus, Briefcase, Trash2, ExternalLink, MapPin, Building2, Sparkles, Edit3, X, Check, Rocket } from 'lucide-react';
+import {
+  Loader2, Plus, Briefcase, Trash2, ExternalLink, MapPin, Building2, Sparkles,
+  Edit3, X, Check, Rocket, Users, Clock, ChevronDown,
+} from 'lucide-react';
 import { useCompanyProfile, useEmployerJobs } from '@/hooks/useEmployer';
+import { useEmployerApplications } from '@/hooks/useProfileData';
 import { useAuth } from '@/hooks/useAuth';
 import { timeAgo } from '@/lib/utils';
-import type { EmployerJob, EmployerJobStatus, CompanyProfile } from '@/types';
+import type { EmployerJob, EmployerJobStatus, CompanyProfile, EmployerApplicationStatus, EmployerApplication } from '@/types';
 import type { Domain } from '@/types';
+
+type EmployerTab = 'jobs' | 'applicants';
 
 export function EmployerPage({ domains }: { domains: Domain[] }) {
   const auth = useAuth();
   const { company, loading: companyLoading, createCompany } = useCompanyProfile();
   const { jobs, loading: jobsLoading, createJob, updateJob, deleteJob } = useEmployerJobs();
-
+  const [tab, setTab] = useState<EmployerTab>('jobs');
   const [showCompanyForm, setShowCompanyForm] = useState(false);
   const [showJobForm, setShowJobForm] = useState(false);
   const [editingJob, setEditingJob] = useState<EmployerJob | null>(null);
@@ -53,7 +59,7 @@ export function EmployerPage({ domains }: { domains: Domain[] }) {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
       {/* Company header */}
       <div className="mb-6 flex items-start justify-between">
         <div className="flex items-center gap-4">
@@ -82,6 +88,22 @@ export function EmployerPage({ domains }: { domains: Domain[] }) {
         </button>
       </div>
 
+      {/* Tabs */}
+      <div className="mb-5 flex gap-1 border-b border-slate-200">
+        <button
+          onClick={() => setTab('jobs')}
+          className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-sm font-medium transition ${tab === 'jobs' ? 'border-slate-900 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+        >
+          <Briefcase className="h-4 w-4" /> Jobs
+        </button>
+        <button
+          onClick={() => setTab('applicants')}
+          className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-sm font-medium transition ${tab === 'applicants' ? 'border-slate-900 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+        >
+          <Users className="h-4 w-4" /> Applicants
+        </button>
+      </div>
+
       {showJobForm && (
         <div className="mb-6">
           <JobForm
@@ -102,42 +124,185 @@ export function EmployerPage({ domains }: { domains: Domain[] }) {
         </div>
       )}
 
-      {/* Jobs list */}
-      <div className="mb-3 flex items-center gap-2">
-        <Briefcase className="h-5 w-5 text-slate-400" />
-        <h3 className="text-lg font-semibold text-slate-900">Posted Jobs</h3>
-        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">{jobs.length}</span>
+      {tab === 'jobs' && (
+        <>
+          {jobsLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-slate-300" />
+            </div>
+          ) : jobs.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 py-12 text-center">
+              <Briefcase className="mx-auto mb-2 h-10 w-10 text-slate-200" />
+              <p className="text-sm text-slate-400">No jobs posted yet</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {jobs.map((job) => (
+                <EmployerJobCard
+                  key={job.id}
+                  job={job}
+                  onEdit={() => { setEditingJob(job); setShowJobForm(true); }}
+                  onDelete={() => { if (confirm('Delete this job?')) deleteJob(job.id); }}
+                  onTogglePromoted={() => updateJob(job.id, { is_promoted: !job.is_promoted })}
+                  onToggleStatus={() => {
+                    const next: EmployerJobStatus = job.status === 'draft' ? 'active' : job.status === 'active' ? 'closed' : 'draft';
+                    updateJob(job.id, { status: next, posted_at: next === 'active' && !job.posted_at ? new Date().toISOString() : job.posted_at });
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {tab === 'applicants' && <ApplicantsPipeline jobs={jobs} />}
+    </div>
+  );
+}
+
+// ============ APPLICANTS PIPELINE (ATS) ============
+
+const PIPELINE_COLUMNS: { status: EmployerApplicationStatus; label: string; color: string; bg: string }[] = [
+  { status: 'applied', label: 'Applied', color: 'text-sky-700', bg: 'bg-sky-50' },
+  { status: 'screening', label: 'Screening', color: 'text-amber-700', bg: 'bg-amber-50' },
+  { status: 'interview', label: 'Interview', color: 'text-violet-700', bg: 'bg-violet-50' },
+  { status: 'offer', label: 'Offer', color: 'text-emerald-700', bg: 'bg-emerald-50' },
+  { status: 'rejected', label: 'Rejected', color: 'text-red-700', bg: 'bg-red-50' },
+  { status: 'hired', label: 'Hired', color: 'text-teal-700', bg: 'bg-teal-50' },
+];
+
+function ApplicantsPipeline({ jobs }: { jobs: EmployerJob[] }) {
+  const [selectedJobId, setSelectedJobId] = useState<string>('');
+  const { applications, loading, updateStatus } = useEmployerApplications(selectedJobId || undefined);
+
+  const activeJobs = jobs.filter((j) => j.status === 'active' || j.status === 'closed');
+  const filteredApps = selectedJobId ? applications.filter((a) => a.job_id === selectedJobId) : applications;
+
+  if (jobs.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-slate-200 py-12 text-center">
+        <Users className="mx-auto mb-2 h-10 w-10 text-slate-200" />
+        <p className="text-sm text-slate-400">Post a job first to start receiving applications</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Job filter */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          onClick={() => setSelectedJobId('')}
+          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${!selectedJobId ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+        >
+          All Jobs
+        </button>
+        {activeJobs.map((job) => (
+          <button
+            key={job.id}
+            onClick={() => setSelectedJobId(job.id)}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${selectedJobId === job.id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+          >
+            {job.title}
+          </button>
+        ))}
       </div>
 
-      {jobsLoading ? (
+      {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-slate-300" />
         </div>
-      ) : jobs.length === 0 ? (
+      ) : filteredApps.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 py-12 text-center">
-          <Briefcase className="mx-auto mb-2 h-10 w-10 text-slate-200" />
-          <p className="text-sm text-slate-400">No jobs posted yet</p>
+          <Users className="mx-auto mb-2 h-10 w-10 text-slate-200" />
+          <p className="text-sm text-slate-400">No applications yet</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {jobs.map((job) => (
-            <EmployerJobCard
-              key={job.id}
-              job={job}
-              onEdit={() => { setEditingJob(job); setShowJobForm(true); }}
-              onDelete={() => { if (confirm('Delete this job?')) deleteJob(job.id); }}
-              onTogglePromoted={() => updateJob(job.id, { is_promoted: !job.is_promoted })}
-              onToggleStatus={() => {
-                const next: EmployerJobStatus = job.status === 'draft' ? 'active' : job.status === 'active' ? 'closed' : 'draft';
-                updateJob(job.id, { status: next, posted_at: next === 'active' && !job.posted_at ? new Date().toISOString() : job.posted_at });
-              }}
-            />
-          ))}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          {PIPELINE_COLUMNS.map((col) => {
+            const colApps = filteredApps.filter((a) => a.status === col.status);
+            return (
+              <div key={col.status} className="space-y-2">
+                <div className={`flex items-center justify-between rounded-lg px-3 py-2 ${col.bg}`}>
+                  <span className={`text-xs font-semibold ${col.color}`}>{col.label}</span>
+                  <span className={`text-xs font-bold ${col.color}`}>{colApps.length}</span>
+                </div>
+                {colApps.map((app) => (
+                  <ApplicantCard key={app.id} app={app} onUpdateStatus={updateStatus} />
+                ))}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
+
+function ApplicantCard({ app, onUpdateStatus }: { app: EmployerApplication; onUpdateStatus: (id: string, status: EmployerApplicationStatus) => void }) {
+  const [showMenu, setShowMenu] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const profile = app.profiles;
+  const job = app.employer_jobs;
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:shadow-md">
+      <div className="mb-2 flex items-start justify-between">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-slate-900">{profile?.full_name || 'Anonymous'}</p>
+          <p className="truncate text-xs text-slate-500">{profile?.headline || profile?.current_job_title || ''}</p>
+        </div>
+        <div className="relative">
+          <button onClick={() => setShowMenu(!showMenu)} className="rounded p-0.5 text-slate-400 hover:bg-slate-100">
+            <ChevronDown className="h-4 w-4" />
+          </button>
+          {showMenu && (
+            <div className="absolute right-0 top-6 z-10 w-36 rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+              {PIPELINE_COLUMNS.map((col) => (
+                <button
+                  key={col.status}
+                  onClick={() => { onUpdateStatus(app.id, col.status); setShowMenu(false); }}
+                  className={`flex w-full items-center gap-1.5 px-3 py-1.5 text-xs hover:bg-slate-50 ${col.color}`}
+                >
+                  {col.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {job && <p className="mb-1 truncate text-xs text-slate-400">{job.title}</p>}
+
+      {profile?.skills && profile.skills.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1">
+          {profile.skills.slice(0, 3).map((s) => (
+            <span key={s} className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">{s}</span>
+          ))}
+          {profile.skills.length > 3 && <span className="text-[10px] text-slate-400">+{profile.skills.length - 3}</span>}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 text-xs text-slate-400">
+        <Clock className="h-3 w-3" />
+        {timeAgo(app.applied_at)}
+        {app.cover_note && (
+          <button onClick={() => setShowDetails(!showDetails)} className="ml-auto text-sky-600 hover:underline">
+            Details
+          </button>
+        )}
+      </div>
+
+      {showDetails && app.cover_note && (
+        <div className="mt-2 rounded-lg bg-slate-50 p-2 text-xs text-slate-600">
+          {app.cover_note}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============ COMPANY FORM ============
 
 function CompanyForm({ onSubmit, onCancel }: {
   onSubmit: (input: Partial<CompanyProfile>) => Promise<void>;
@@ -226,6 +391,8 @@ function CompanyForm({ onSubmit, onCancel }: {
     </div>
   );
 }
+
+// ============ JOB FORM ============
 
 function JobForm({ domains, company, editingJob, onSubmit, onCancel }: {
   domains: Domain[];
@@ -405,6 +572,8 @@ function JobForm({ domains, company, editingJob, onSubmit, onCancel }: {
     </div>
   );
 }
+
+// ============ EMPLOYER JOB CARD ============
 
 function EmployerJobCard({ job, onEdit, onDelete, onTogglePromoted, onToggleStatus }: {
   job: EmployerJob;

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Loader2, Inbox, Menu, Search, ArrowUpDown, ShieldCheck, Info, SlidersHorizontal, X } from 'lucide-react';
+import { Loader2, Inbox, Menu, Search, ArrowUpDown, ShieldCheck, Info, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
 import type { JobPosting, Domain } from '@/types';
 import { JobCard } from './JobCard';
 import { JobDetailDrawer } from './JobDetailDrawer';
@@ -37,6 +37,7 @@ export function JobFeed({ jobs, loading, error, selectedDomain, onOpenSidebar, s
   const [freshness, setFreshness] = useState<string>('all');
   const [hasSalary, setHasSalary] = useState(false);
   const [minTrust, setMinTrust] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(24);
 
   const activeFilterCount = (remoteOnly ? 1 : 0) + (jobType !== 'all' ? 1 : 0) + (freshness !== 'all' ? 1 : 0) + (hasSalary ? 1 : 0) + (minTrust > 0 ? 1 : 0);
 
@@ -70,6 +71,9 @@ export function JobFeed({ jobs, loading, error, selectedDomain, onOpenSidebar, s
     }
     return result;
   }, [jobs, searchQuery, sortKey, remoteOnly, jobType, freshness, hasSalary, minTrust]);
+
+  const visibleJobs = filtered.slice(0, visibleCount);
+  const hasMore = filtered.length > visibleCount;
 
   return (
     <div className="min-h-full">
@@ -269,11 +273,24 @@ export function JobFeed({ jobs, loading, error, selectedDomain, onOpenSidebar, s
             </p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
-            {filtered.map((job) => (
-              <JobCard key={job.id} job={job} userId={userId} onClick={setSelectedJob} />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
+              {visibleJobs.map((job) => (
+                <JobCard key={job.id} job={job} userId={userId} onClick={setSelectedJob} />
+              ))}
+            </div>
+            {hasMore && (
+              <div className="mt-6 flex justify-center">
+                <button
+                  onClick={() => setVisibleCount((c) => c + 24)}
+                  className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+                >
+                  Load more jobs
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

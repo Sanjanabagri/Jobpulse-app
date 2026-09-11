@@ -293,3 +293,95 @@ export interface AdminFeedback extends Feedback {
   user_email?: string | null;
   user_name?: string | null;
 }
+
+// ============ WORK EXPERIENCE ============
+
+export interface WorkExperience {
+  id: string;
+  user_id: string;
+  company: string;
+  title: string;
+  start_date: string;
+  end_date: string | null;
+  description: string | null;
+  location: string | null;
+  is_current: boolean;
+  created_at: string;
+}
+
+// ============ EDUCATION ============
+
+export interface Education {
+  id: string;
+  user_id: string;
+  institution: string;
+  degree: string;
+  field_of_study: string | null;
+  start_year: number | null;
+  end_year: number | null;
+  grade_percentage: string | null;
+  description: string | null;
+  created_at: string;
+}
+
+// ============ RESUME ============
+
+export interface Resume {
+  id: string;
+  user_id: string;
+  file_path: string;
+  file_name: string;
+  file_size: number | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+// ============ COMPANY REVIEW ============
+
+export interface CompanyReview {
+  id: string;
+  user_id: string;
+  company_name: string;
+  rating: number;
+  title: string | null;
+  pros: string | null;
+  cons: string | null;
+  would_recommend: boolean;
+  job_title: string | null;
+  employment_status: string | null;
+  created_at: string;
+}
+
+// ============ JOB ALERT ============
+
+export interface JobAlert {
+  id: string;
+  user_id: string;
+  name: string;
+  domain_id: string | null;
+  keywords: string | null;
+  is_remote: boolean | null;
+  job_type: string | null;
+  min_trust_score: number | null;
+  is_active: boolean;
+  last_triggered_at: string | null;
+  created_at: string;
+}
+
+// ============ EMPLOYER APPLICATION (ATS) ============
+
+export type EmployerApplicationStatus = 'applied' | 'screening' | 'interview' | 'offer' | 'rejected' | 'hired';
+
+export interface EmployerApplication {
+  id: string;
+  job_id: string;
+  applicant_user_id: string;
+  cover_note: string | null;
+  resume_path: string | null;
+  status: EmployerApplicationStatus;
+  employer_notes: string | null;
+  applied_at: string;
+  updated_at: string;
+  employer_jobs?: EmployerJob;
+  profiles?: Pick<Profile, 'full_name' | 'headline' | 'skills' | 'experience_years' | 'current_job_title'>;
+}

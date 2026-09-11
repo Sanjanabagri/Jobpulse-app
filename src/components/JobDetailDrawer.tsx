@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   X, MapPin, Building2, ExternalLink, Briefcase, Clock, ShieldCheck, AlertTriangle,
-  Zap, Heart, Globe, Wallet, Users, Send, CheckCircle2, Calendar,
+  Zap, Heart, Globe, Wallet, Users, Send, CheckCircle2, Calendar, FileText, Star,
 } from 'lucide-react';
 import type { JobPosting } from '@/types';
 import { supabase } from '@/lib/supabase';
@@ -27,11 +27,18 @@ export function JobDetailDrawer({ job, isOpen, onClose, userId, onApply }: JobDe
   const [saved, setSaved] = useState(false);
   const [savingJob, setSavingJob] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [showApplyForm, setShowApplyForm] = useState(false);
+  const [coverNote, setCoverNote] = useState('');
+  const [activeResumePath, setActiveResumePath] = useState<string | null>(null);
+  const [applying, setApplying] = useState(false);
+  const [companyReviews, setCompanyReviews] = useState<{ rating: number; count: number } | null>(null);
 
   useEffect(() => {
     if (job) {
       setSaved(job.is_saved || false);
       setApplied(false);
+      setShowApplyForm(false);
+      setCoverNote('');
       if (userId) {
         supabase
           .from('job_applications')
@@ -40,7 +47,26 @@ export function JobDetailDrawer({ job, isOpen, onClose, userId, onApply }: JobDe
           .eq('job_id', job.id)
           .maybeSingle()
           .then(({ data }) => setApplied(!!data));
+        supabase
+          .from('resumes')
+          .select('file_path')
+          .eq('is_active', true)
+          .maybeSingle()
+          .then(({ data }) => setActiveResumePath(data?.file_path ?? null));
       }
+      // Fetch company reviews summary
+      supabase
+        .from('company_reviews')
+        .select('rating')
+        .ilike('company_name', job.company)
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            const avg = data.reduce((s, r) => s + r.rating, 0) / data.length;
+            setCompanyReviews({ rating: avg, count: data.length });
+          } else {
+            setCompanyReviews(null);
+          }
+        });
     }
   }, [job, userId]);
 
@@ -83,13 +109,23 @@ export function JobDetailDrawer({ job, isOpen, onClose, userId, onApply }: JobDe
 
   async function handleApply() {
     if (!userId || !job) return;
-    await supabase.from('job_applications').insert({
-      user_id: userId,
-      job_id: job.id,
-      status: 'applied',
-    });
-    setApplied(true);
-    onApply?.(job);
+    setApplying(true);
+    try {
+      await supabase.from('job_applications').insert({
+        user_id: userId,
+        job_id: job.id,
+        status: 'applied',
+        cover_note: coverNote.trim() || null,
+        resume_path: activeResumePath,
+      });
+      setApplied(true);
+      setShowApplyForm(false);
+      onApply?.(job);
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setApplying(false);
+    }
   }
 
   return (
@@ -257,6 +293,21 @@ export function JobDetailDrawer({ job, isOpen, onClose, userId, onApply }: JobDe
             )}
           </div>
 
+          {/* Company reviews summary */}
+          {companyReviews && (
+            <div className="border-t border-slate-200 bg-amber-50/50 p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Star key={n} className={`h-4 w-4 ${n <= Math.round(companyReviews.rating) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
+                  ))}
+                </div>
+                <span className="text-sm font-semibold text-slate-900">{companyReviews.rating.toFixed(1)}</span>
+                <span className="text-sm text-slate-500">based on {companyReviews.count} review{companyReviews.count > 1 ? 's' : ''}</span>
+              </div>
+            </div>
+          )}
+
           {/* Company info */}
           <div className="border-t border-slate-200 bg-slate-50 p-5">
             <h3 className="mb-3 text-sm font-bold text-slate-900">About {job.company}</h3>
@@ -303,13 +354,44 @@ export function JobDetailDrawer({ job, isOpen, onClose, userId, onApply }: JobDe
             </button>
           )}
 
-          {userId && !applied && (
+          {userId && !applied && !showApplyForm && (
             <button
-              onClick={handleApply}
+              onClick={() => setShowApplyForm(true)}
               className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-sky-600 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700 active:scale-[0.98]"
             >
-              <Send className="h-4 w-4" /> Track Application
+              <Send className="h-4 w-4" /> Apply Now
             </button>
+          )}
+          {userId && !applied && showApplyForm && (
+            <div className="flex-1 space-y-2">
+              <textarea
+                value={coverNote}
+                onChange={(e) => setCoverNote(e.target.value)}
+                placeholder="Add a cover note (optional)..."
+                rows={2}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 text-sm focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-100"
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleApply}
+                  disabled={applying}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-sky-600 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700 active:scale-[0.98] disabled:opacity-50"
+                >
+                  {applying ? <><Loader2 className="h-4 w-4 animate-spin" /> Submitting...</> : <><Send className="h-4 w-4" /> Submit Application</>}
+                </button>
+                <button onClick={() => setShowApplyForm(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                  Cancel
+                </button>
+              </div>
+              {activeResumePath && (
+                <p className="flex items-center gap-1 text-xs text-emerald-600">
+                  <FileText className="h-3 w-3" /> Your active resume will be attached
+                </p>
+              )}
+              {!activeResumePath && (
+                <p className="text-xs text-amber-600">No resume uploaded. Add one from Edit Profile for better applications.</p>
+              )}
+            </div>
           )}
 
           {userId && applied && (
