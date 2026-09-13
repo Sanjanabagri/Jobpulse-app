@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { Bookmark, Loader2, ExternalLink, MapPin, Building2, Trash2, Search } from 'lucide-react';
 import { useJobPostings } from '@/hooks/useData';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 import type { JobPosting } from '@/types';
 import { timeAgo } from '@/lib/utils';
 import { JobDetailDrawer } from './JobDetailDrawer';
 
 export function SavedJobsPage() {
   const auth = useAuth();
-  const { jobs, loading, toggleSave } = useJobPostings(null, auth.profile);
+  const { jobs, loading, refetch } = useJobPostings(null, auth.profile);
   const [search, setSearch] = useState('');
   const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
 
@@ -18,6 +19,12 @@ export function SavedJobsPage() {
     j.title.toLowerCase().includes(search.toLowerCase()) ||
     j.company.toLowerCase().includes(search.toLowerCase())
   );
+
+  async function handleRemove(jobId: string) {
+    if (!auth.user?.id) return;
+    await supabase.from('saved_jobs').delete().eq('user_id', auth.user.id).eq('job_id', jobId);
+    refetch();
+  }
 
   if (loading) {
     return (
@@ -56,7 +63,7 @@ export function SavedJobsPage() {
       ) : (
         <div className="space-y-3">
           {filtered.map((job) => (
-            <SavedJobCard key={job.id} job={job} onRemove={() => toggleSave(job.id, true)} onClick={() => setSelectedJob(job)} />
+            <SavedJobCard key={job.id} job={job} onRemove={() => handleRemove(job.id)} onClick={() => setSelectedJob(job)} />
           ))}
         </div>
       )}

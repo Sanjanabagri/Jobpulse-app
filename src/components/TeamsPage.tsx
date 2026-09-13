@@ -45,6 +45,7 @@ export function TeamsPage() {
         team={selectedTeam}
         onBack={() => setSelectedTeam(null)}
         currentUserId={auth.user?.id ?? null}
+        onDeleteTeam={deleteTeam}
       />
     );
   }
@@ -145,7 +146,7 @@ export function TeamsPage() {
   );
 }
 
-function TeamDetail({ team, onBack, currentUserId }: { team: Team; onBack: () => void; currentUserId: string | null }) {
+function TeamDetail({ team, onBack, currentUserId, onDeleteTeam }: { team: Team; onBack: () => void; currentUserId: string | null; onDeleteTeam: (id: string) => Promise<void> }) {
   const { members, loading: membersLoading, inviteMember, removeMember } = useTeamMembers(team.id);
   const { sharedJobs, loading: sharedLoading, shareJob, unshareJob } = useSharedJobs(team.id);
   const { savedJobs } = useUserJobsForSharing();
@@ -215,7 +216,7 @@ function TeamDetail({ team, onBack, currentUserId }: { team: Team; onBack: () =>
           <button
             onClick={() => {
               if (confirm('Delete this team? All members and shared jobs will be removed.')) {
-                deleteTeam(team.id);
+                onDeleteTeam(team.id);
                 onBack();
               }
             }}
@@ -385,9 +386,9 @@ function TeamDetail({ team, onBack, currentUserId }: { team: Team; onBack: () =>
                       {sj.note && <p className="mt-1 text-xs italic text-slate-500">"{sj.note}"</p>}
                       <div className="mt-1.5 flex items-center gap-2">
                         <span className="text-xs text-slate-400">{timeAgo(sj.created_at)}</span>
-                        {sj.job_postings?.url && (
+                        {sj.job_postings?.apply_url && (
                           <a
-                            href={sj.job_postings.url}
+                            href={sj.job_postings.apply_url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-0.5 text-xs font-medium text-sky-600 hover:text-sky-700"

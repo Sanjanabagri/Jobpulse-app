@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   X, MapPin, Building2, ExternalLink, Briefcase, Clock, ShieldCheck, AlertTriangle,
-  Zap, Heart, Globe, Wallet, Users, Send, CheckCircle2, Calendar, FileText, Star,
+  Zap, Heart, Globe, Wallet, Users, Send, CheckCircle2, Calendar, FileText, Star, Loader2,
 } from 'lucide-react';
 import type { JobPosting } from '@/types';
 import { supabase } from '@/lib/supabase';
