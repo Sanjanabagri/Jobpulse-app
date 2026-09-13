@@ -305,7 +305,7 @@ function ApplicantCard({ app, onUpdateStatus }: { app: EmployerApplication; onUp
 // ============ COMPANY FORM ============
 
 function CompanyForm({ onSubmit, onCancel }: {
-  onSubmit: (input: Partial<CompanyProfile>) => Promise<void>;
+  onSubmit: (input: { name: string; website?: string; description?: string; industry?: string; location?: string; size_range?: string }) => Promise<void>;
   onCancel: () => void;
 }) {
   const [name, setName] = useState('');
