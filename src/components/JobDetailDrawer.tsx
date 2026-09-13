@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   X, MapPin, Building2, ExternalLink, Briefcase, Clock, ShieldCheck, AlertTriangle,
-  Zap, Heart, Globe, Wallet, Users, Send, CheckCircle2, Calendar, FileText, Star, Loader2,
+  Zap, Heart, Globe, Wallet, Users, Send, CheckCircle2, Calendar, FileText, Star, Loader2, Upload, Check,
 } from 'lucide-react';
-import type { JobPosting } from '@/types';
+import type { JobPosting, Resume } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { timeAgo, formatSalary, parseJobDescription, extractRequirements } from '@/lib/utils';
 import { DomainIcon } from './DomainIcon';
@@ -29,9 +29,12 @@ export function JobDetailDrawer({ job, isOpen, onClose, userId, onApply }: JobDe
   const [applied, setApplied] = useState(false);
   const [showApplyForm, setShowApplyForm] = useState(false);
   const [coverNote, setCoverNote] = useState('');
-  const [activeResumePath, setActiveResumePath] = useState<string | null>(null);
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [selectedResumePath, setSelectedResumePath] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
+  const [uploadingResume, setUploadingResume] = useState(false);
   const [companyReviews, setCompanyReviews] = useState<{ rating: number; count: number } | null>(null);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (job) {
@@ -49,10 +52,14 @@ export function JobDetailDrawer({ job, isOpen, onClose, userId, onApply }: JobDe
           .then(({ data }) => setApplied(!!data));
         supabase
           .from('resumes')
-          .select('file_path')
-          .eq('is_active', true)
-          .maybeSingle()
-          .then(({ data }) => setActiveResumePath(data?.file_path ?? null));
+          .select('*')
+          .order('created_at', { ascending: false })
+          .then(({ data }) => {
+            const list = (data as Resume[]) || [];
+            setResumes(list);
+            const active = list.find((r) => r.is_active);
+            setSelectedResumePath(active?.file_path ?? list[0]?.file_path ?? null);
+          });
       }
       // Fetch company reviews summary
       supabase
@@ -116,7 +123,7 @@ export function JobDetailDrawer({ job, isOpen, onClose, userId, onApply }: JobDe
         job_id: job.id,
         status: 'applied',
         cover_note: coverNote.trim() || null,
-        resume_path: activeResumePath,
+        resume_path: selectedResumePath,
       });
       setApplied(true);
       setShowApplyForm(false);
@@ -125,6 +132,35 @@ export function JobDetailDrawer({ job, isOpen, onClose, userId, onApply }: JobDe
       alert(err.message);
     } finally {
       setApplying(false);
+    }
+  }
+
+  async function handleUploadResume(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert('File too large. Maximum 5MB.'); return; }
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (!ext || !['pdf', 'doc', 'docx'].includes(ext)) { alert('Only PDF, DOC, DOCX files allowed.'); return; }
+    setUploadingResume(true);
+    try {
+      const filePath = `${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('resumes').upload(filePath, file);
+      if (uploadError) throw uploadError;
+      await supabase.from('resumes').update({ is_active: false }).neq('id', '00000000-0000-0000-0000-000000000000');
+      const { data, error } = await supabase
+        .from('resumes')
+        .insert({ file_path: filePath, file_name: file.name, file_size: file.size, is_active: true })
+        .select('*')
+        .single();
+      if (error) throw error;
+      const newResume = data as Resume;
+      setResumes((prev) => [newResume, ...prev.map((r) => ({ ...r, is_active: false }))]);
+      setSelectedResumePath(filePath);
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setUploadingResume(false);
+      if (resumeInputRef.current) resumeInputRef.current.value = '';
     }
   }
 
@@ -338,39 +374,88 @@ export function JobDetailDrawer({ job, isOpen, onClose, userId, onApply }: JobDe
         </div>
 
         {/* Sticky action bar */}
-        <div className="flex items-center gap-3 border-t border-slate-200 bg-white p-4">
-          {userId && (
-            <button
-              onClick={toggleSave}
-              disabled={savingJob}
-              className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition ${
-                saved
-                  ? 'border-red-200 bg-red-50 text-red-600'
-                  : 'border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
-              }`}
-            >
-              <Heart className={`h-4 w-4 ${saved ? 'fill-current' : ''}`} />
-              {saved ? 'Saved' : 'Save'}
-            </button>
-          )}
-
+        <div className="border-t border-slate-200 bg-white p-4">
           {userId && !applied && !showApplyForm && (
-            <button
-              onClick={() => setShowApplyForm(true)}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-sky-600 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700 active:scale-[0.98]"
-            >
-              <Send className="h-4 w-4" /> Apply Now
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={toggleSave}
+                disabled={savingJob}
+                className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition ${
+                  saved
+                    ? 'border-red-200 bg-red-50 text-red-600'
+                    : 'border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <Heart className={`h-4 w-4 ${saved ? 'fill-current' : ''}`} />
+                {saved ? 'Saved' : 'Save'}
+              </button>
+              <button
+                onClick={() => setShowApplyForm(true)}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 transition hover:from-sky-700 hover:to-blue-700 active:scale-[0.98]"
+              >
+                <Send className="h-4 w-4" /> Apply Now
+              </button>
+            </div>
           )}
           {userId && !applied && showApplyForm && (
-            <div className="flex-1 space-y-2">
-              <textarea
-                value={coverNote}
-                onChange={(e) => setCoverNote(e.target.value)}
-                placeholder="Add a cover note (optional)..."
-                rows={2}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 text-sm focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-100"
-              />
+            <div className="flex-1 space-y-3">
+              {/* Resume selector */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                    <FileText className="h-3.5 w-3.5 text-slate-400" /> Resume
+                  </label>
+                  <input ref={resumeInputRef} type="file" accept=".pdf,.doc,.docx" onChange={handleUploadResume} className="hidden" />
+                  <button
+                    onClick={() => resumeInputRef.current?.click()}
+                    disabled={uploadingResume}
+                    className="flex items-center gap-1 text-xs font-medium text-sky-600 hover:text-sky-700 disabled:opacity-50"
+                  >
+                    {uploadingResume ? <><Loader2 className="h-3 w-3 animate-spin" /> Uploading...</> : <><Upload className="h-3 w-3" /> Upload new</>}
+                  </button>
+                </div>
+                {resumes.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {resumes.map((r) => (
+                      <button
+                        key={r.id}
+                        onClick={() => setSelectedResumePath(r.file_path)}
+                        className={`flex w-full items-center gap-2 rounded-lg border p-2 text-left text-xs transition ${
+                          selectedResumePath === r.file_path
+                            ? 'border-sky-400 bg-sky-50 ring-1 ring-sky-200'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+                          selectedResumePath === r.file_path ? 'bg-sky-500 text-white' : 'bg-slate-100 text-slate-400'
+                        }`}>
+                          {selectedResumePath === r.file_path ? <Check className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium text-slate-800">{r.file_name}</p>
+                          <p className="text-slate-400">{r.file_size ? `${(r.file_size / 1024).toFixed(0)} KB` : ''}{r.is_active ? ' · Active' : ''}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-amber-600">No resume uploaded yet. Click "Upload new" to add one.</p>
+                )}
+              </div>
+
+              {/* Cover note */}
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700">Cover note (optional)</label>
+                <textarea
+                  value={coverNote}
+                  onChange={(e) => setCoverNote(e.target.value)}
+                  placeholder="Tell the employer why you're a great fit..."
+                  rows={3}
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
+                />
+              </div>
+
+              {/* Actions */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleApply}
@@ -383,20 +468,12 @@ export function JobDetailDrawer({ job, isOpen, onClose, userId, onApply }: JobDe
                   Cancel
                 </button>
               </div>
-              {activeResumePath && (
-                <p className="flex items-center gap-1 text-xs text-emerald-600">
-                  <FileText className="h-3 w-3" /> Your active resume will be attached
-                </p>
-              )}
-              {!activeResumePath && (
-                <p className="text-xs text-amber-600">No resume uploaded. Add one from Edit Profile for better applications.</p>
-              )}
             </div>
           )}
 
           {userId && applied && (
-            <div className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-50 py-2.5 text-sm font-semibold text-emerald-700">
-              <CheckCircle2 className="h-4 w-4" /> Application tracked
+            <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-50 py-3 text-sm font-semibold text-emerald-700">
+              <CheckCircle2 className="h-5 w-5" /> Application submitted successfully
             </div>
           )}
 
