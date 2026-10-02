@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Briefcase, CalendarClock, Sparkles, MessageCircle, Star, Users, Bookmark, Send, Building2, Bell, BarChart3 } from 'lucide-react';
+import { Briefcase, CalendarClock, Sparkles, MessageCircle, Star, Users, Bookmark, Send, Building2, Bell, BarChart3, GitCompare } from 'lucide-react';
 import { SplashScreen } from '@/components/SplashScreen';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
@@ -19,11 +19,14 @@ import { ProfileOnboarding } from '@/components/ProfileOnboarding';
 import { EditProfileModal } from '@/components/EditProfileModal';
 import { ForgotPassword } from '@/components/ForgotPassword';
 import { AdminOverviewPage } from '@/components/AdminOverviewPage';
+import { JobCompareView } from '@/components/JobCompareView';
+import { SalaryInsightsPage } from '@/components/SalaryInsightsPage';
+import { GitCompare, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDomains, useJobPostings, useDailyDigests, useSubscriberCount } from '@/hooks/useData';
 import { trackVisit } from '@/hooks/useAdminStats';
 
-type Tab = 'jobs' | 'triggers' | 'feedback' | 'teams' | 'saved' | 'applications' | 'employer' | 'notifications' | 'admin';
+type Tab = 'jobs' | 'compare' | 'insights' | 'triggers' | 'feedback' | 'teams' | 'saved' | 'applications' | 'employer' | 'notifications' | 'admin';
 
 function App() {
   const auth = useAuth();
@@ -176,6 +179,12 @@ function App() {
             <button onClick={() => setActiveTab('jobs')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'jobs' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
               <Briefcase className="h-4 w-4" /> Job Feed
             </button>
+            <button onClick={() => setActiveTab('compare')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'compare' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+              <GitCompare className="h-4 w-4" /> Compare
+            </button>
+            <button onClick={() => setActiveTab('insights')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'insights' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+              <BarChart3 className="h-4 w-4" /> Insights
+            </button>
             <button onClick={() => setActiveTab('saved')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'saved' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
               <Bookmark className="h-4 w-4" /> Saved
             </button>
@@ -214,7 +223,12 @@ function App() {
               onSearchChange={setSearchQuery}
               userId={userId}
               hasProfile={!!auth.profile}
+              profile={auth.profile}
             />
+          ) : activeTab === 'compare' ? (
+            <JobCompareView jobs={jobs} />
+          ) : activeTab === 'insights' ? (
+            <SalaryInsightsPage />
           ) : activeTab === 'saved' ? (
             <SavedJobsPage />
           ) : activeTab === 'applications' ? (

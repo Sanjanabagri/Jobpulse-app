@@ -3,10 +3,11 @@ import {
   X, MapPin, Building2, ExternalLink, Briefcase, Clock, ShieldCheck, AlertTriangle,
   Zap, Heart, Globe, Wallet, Users, Send, CheckCircle2, Calendar, FileText, Star, Loader2, Upload, Check,
 } from 'lucide-react';
-import type { JobPosting, Resume } from '@/types';
+import type { JobPosting, Resume, ExtendedProfile } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { timeAgo, formatSalary, parseJobDescription, extractRequirements } from '@/lib/utils';
 import { DomainIcon } from './DomainIcon';
+import { SkillGapAnalysis } from './SkillGapAnalysis';
 
 interface JobDetailDrawerProps {
   job: JobPosting | null;
@@ -14,6 +15,7 @@ interface JobDetailDrawerProps {
   onClose: () => void;
   userId?: string;
   onApply?: (job: JobPosting) => void;
+  profile?: ExtendedProfile | null;
 }
 
 const FRESHNESS_CONFIG: Record<string, { label: string; color: string; bg: string; dot: string }> = {
@@ -23,7 +25,7 @@ const FRESHNESS_CONFIG: Record<string, { label: string; color: string; bg: strin
   stale: { label: 'Stale', color: 'text-red-700', bg: 'bg-red-50', dot: 'bg-red-500' },
 };
 
-export function JobDetailDrawer({ job, isOpen, onClose, userId, onApply }: JobDetailDrawerProps) {
+export function JobDetailDrawer({ job, isOpen, onClose, userId, onApply, profile }: JobDetailDrawerProps) {
   const [saved, setSaved] = useState(false);
   const [savingJob, setSavingJob] = useState(false);
   const [applied, setApplied] = useState(false);
@@ -304,6 +306,9 @@ export function JobDetailDrawer({ job, isOpen, onClose, userId, onApply }: JobDe
               </ul>
             </div>
           )}
+
+          {/* Skill Gap Analysis */}
+          {profile && <SkillGapAnalysis job={job} profile={profile} />}
 
           {/* Job description sections */}
           <div className="p-5">

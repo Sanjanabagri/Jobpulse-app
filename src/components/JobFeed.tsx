@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Loader2, Inbox, Menu, Search, ArrowUpDown, ShieldCheck, Info, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
-import type { JobPosting, Domain } from '@/types';
+import type { JobPosting, Domain, ExtendedProfile } from '@/types';
 import { JobCard } from './JobCard';
 import { JobDetailDrawer } from './JobDetailDrawer';
 
@@ -25,9 +25,10 @@ interface JobFeedProps {
   onSearchChange: (q: string) => void;
   userId?: string;
   hasProfile?: boolean;
+  profile?: ExtendedProfile | null;
 }
 
-export function JobFeed({ jobs, loading, error, selectedDomain, onOpenSidebar, searchQuery, onSearchChange, userId, hasProfile }: JobFeedProps) {
+export function JobFeed({ jobs, loading, error, selectedDomain, onOpenSidebar, searchQuery, onSearchChange, userId, hasProfile, profile }: JobFeedProps) {
   const [sortKey, setSortKey] = useState<SortKey>('newest');
   const [sortOpen, setSortOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -299,6 +300,7 @@ export function JobFeed({ jobs, loading, error, selectedDomain, onOpenSidebar, s
         isOpen={!!selectedJob}
         onClose={() => setSelectedJob(null)}
         userId={userId}
+        profile={profile}
       />
     </div>
   );

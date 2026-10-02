@@ -113,11 +113,11 @@ export function JobCard({ job, userId, onClick }: JobCardProps) {
             </div>
           </div>
 
-          {/* Match score badge */}
-          {typeof job.match_score === 'number' && (
+          {/* Match score with heat indicator */}
+          {typeof job.match_score === 'number' && job.match_score > 0 && (
             <div className="mt-2 flex items-center gap-2">
-              <div className="flex items-center gap-1.5 rounded-lg bg-violet-50 px-2.5 py-1">
-                <Zap className="h-3 w-3 text-violet-600" />
+              <div className="flex items-center gap-2 rounded-lg bg-violet-50 px-2.5 py-1">
+                <MatchHeatRing score={job.match_score} />
                 <span className="text-xs font-bold text-violet-700">{job.match_score}% match</span>
               </div>
               {job.matched_skills && job.matched_skills.length > 0 && (
@@ -182,5 +182,29 @@ export function JobCard({ job, userId, onClick }: JobCardProps) {
         </div>
       </div>
     </article>
+  );
+}
+
+function MatchHeatRing({ score }: { score: number }) {
+  const color = score >= 70 ? '#10b981' : score >= 40 ? '#f59e0b' : '#ef4444';
+  const radius = 7;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
+  return (
+    <svg className="h-4 w-4 -rotate-90" viewBox="0 0 16 16">
+      <circle cx="8" cy="8" r={radius} fill="none" stroke="#e2e8f0" strokeWidth="2" />
+      <circle
+        cx="8"
+        cy="8"
+        r={radius}
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        className="transition-all duration-500"
+      />
+    </svg>
   );
 }
