@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Briefcase, CalendarClock, Sparkles, MessageCircle, Star, Users, Bookmark, Send, Building2, Bell, BarChart3, GitCompare } from 'lucide-react';
+import { Briefcase, CalendarClock, Sparkles, MessageCircle, Star, Users, Bookmark, Send, Building2, Bell, BarChart3, GitCompare, LayoutDashboard } from 'lucide-react';
 import { SplashScreen } from '@/components/SplashScreen';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
@@ -21,16 +21,19 @@ import { ForgotPassword } from '@/components/ForgotPassword';
 import { AdminOverviewPage } from '@/components/AdminOverviewPage';
 import { JobCompareView } from '@/components/JobCompareView';
 import { SalaryInsightsPage } from '@/components/SalaryInsightsPage';
-import { GitCompare, BarChart3 } from 'lucide-react';
+import { CareerDashboard } from '@/components/CareerDashboard';
+import { JobDetailDrawer } from '@/components/JobDetailDrawer';
+import { useJobApplications } from '@/hooks/useApplications';
+import type { JobPosting } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useDomains, useJobPostings, useDailyDigests, useSubscriberCount } from '@/hooks/useData';
 import { trackVisit } from '@/hooks/useAdminStats';
 
-type Tab = 'jobs' | 'compare' | 'insights' | 'triggers' | 'feedback' | 'teams' | 'saved' | 'applications' | 'employer' | 'notifications' | 'admin';
+type Tab = 'dashboard' | 'jobs' | 'compare' | 'insights' | 'triggers' | 'feedback' | 'teams' | 'saved' | 'applications' | 'employer' | 'notifications' | 'admin';
 
 function App() {
   const auth = useAuth();
-  const [activeTab, setActiveTab] = useState<Tab>('jobs');
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [selectedDomainSlug, setSelectedDomainSlug] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
@@ -84,6 +87,8 @@ function App() {
   const subscriberCount = useSubscriberCount();
   const { jobs, loading, error, refetch } = useJobPostings(selectedDomainSlug, auth.profile);
   const { digests, loading: digestsLoading } = useDailyDigests();
+  const { applications } = useJobApplications();
+  const [dashboardSelectedJob, setDashboardSelectedJob] = useState<JobPosting | null>(null);
 
   // Password reset flow — wait for auth to load so recovery session is ready
   if (isResetMode) {
@@ -176,6 +181,9 @@ function App() {
         <main className="min-h-[calc(100vh-4rem)] flex-1 lg:w-[calc(100%-18rem)]">
           {/* Tab bar */}
           <div className="sticky top-16 z-10 flex items-center gap-1 overflow-x-auto border-b border-slate-200 bg-white/80 px-4 py-2 backdrop-blur-xl sm:px-6 lg:px-8">
+            <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'dashboard' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+              <LayoutDashboard className="h-4 w-4" /> Dashboard
+            </button>
             <button onClick={() => setActiveTab('jobs')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'jobs' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
               <Briefcase className="h-4 w-4" /> Job Feed
             </button>
@@ -212,7 +220,16 @@ function App() {
 
           <StatsBar key={refreshKey} />
 
-          {activeTab === 'jobs' ? (
+          {activeTab === 'dashboard' ? (
+            <CareerDashboard
+              profile={auth.profile}
+              jobs={jobs}
+              applications={applications}
+              domains={domains}
+              onNavigate={(tab) => setActiveTab(tab as Tab)}
+              onViewJob={(job) => setDashboardSelectedJob(job)}
+            />
+          ) : activeTab === 'jobs' ? (
             <JobFeed
               jobs={jobs}
               loading={loading}
@@ -282,6 +299,14 @@ function App() {
         isOpen={subscribeOpen}
         onClose={() => setSubscribeOpen(false)}
         domains={domains}
+      />
+
+      <JobDetailDrawer
+        job={dashboardSelectedJob}
+        isOpen={!!dashboardSelectedJob}
+        onClose={() => setDashboardSelectedJob(null)}
+        userId={auth.user?.id}
+        profile={auth.profile}
       />
     </div>
   );

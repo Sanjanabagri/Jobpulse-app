@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   X, MapPin, Building2, ExternalLink, Briefcase, Clock, ShieldCheck, AlertTriangle,
-  Zap, Heart, Globe, Wallet, Users, Send, CheckCircle2, Calendar, FileText, Star, Loader2, Upload, Check,
+  Zap, Heart, Globe, Wallet, Users, Send, CheckCircle2, Calendar, FileText, Star, Loader2, Upload, Check, Lightbulb,
 } from 'lucide-react';
 import type { JobPosting, Resume, ExtendedProfile } from '@/types';
 import { supabase } from '@/lib/supabase';
@@ -310,6 +310,24 @@ export function JobDetailDrawer({ job, isOpen, onClose, userId, onApply, profile
           {/* Skill Gap Analysis */}
           {profile && <SkillGapAnalysis job={job} profile={profile} />}
 
+          {/* Interview Prep Tips */}
+          {applied && (
+            <div className="border-b border-slate-200 p-5">
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-900">
+                <Lightbulb className="h-4 w-4 text-amber-500" />
+                Interview Prep Tips
+              </h3>
+              <div className="space-y-2.5">
+                {getInterviewTips(job).map((tip, i) => (
+                  <div key={i} className="flex items-start gap-2.5 rounded-xl bg-amber-50/50 px-3 py-2.5">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-700">{i + 1}</span>
+                    <p className="text-sm leading-relaxed text-slate-700">{tip}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Job description sections */}
           <div className="p-5">
             <h3 className="mb-3 text-sm font-bold text-slate-900">Job Description</h3>
@@ -519,4 +537,30 @@ function InfoTile({ icon, label, value }: { icon: React.ReactNode; label: string
       <p className="truncate text-sm font-semibold text-slate-800">{value}</p>
     </div>
   );
+}
+
+function getInterviewTips(job: JobPosting): string[] {
+  const tips: string[] = [];
+  const tags = job.tags || [];
+
+  tips.push(`Research ${job.company} thoroughly — their mission, recent news, products, and culture. Check their website and recent press releases.`);
+
+  if (tags.length > 0) {
+    const topSkills = tags.slice(0, 3).join(', ');
+    tips.push(`Prepare to discuss your experience with ${topSkills}. Have 2-3 concrete examples ready where you used these skills to solve a real problem.`);
+  }
+
+  tips.push(`Be ready to explain why you want this specific role at ${job.company} and how your background aligns with their needs.`);
+
+  if (job.is_remote) {
+    tips.push('Since this is a remote role, highlight your experience with async communication, self-management, and remote collaboration tools.');
+  }
+
+  if (job.experience) {
+    tips.push(`This role requires ${job.experience} experience. Prepare examples that demonstrate your proficiency at this level.`);
+  }
+
+  tips.push('Prepare thoughtful questions to ask the interviewer about the team, growth opportunities, and what success looks like in this role.');
+
+  return tips;
 }
