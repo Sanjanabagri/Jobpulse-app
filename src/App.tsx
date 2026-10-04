@@ -120,6 +120,27 @@ function App() {
     );
   }
 
+  // Standalone showcase mode — renders before splash/auth, no login required
+  const showcaseMode = (() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('showcase') === 'true';
+  })();
+
+  useEffect(() => {
+    if (showcaseMode) {
+      setShowSplash(false);
+      setShowcaseOpen(true);
+    }
+  }, [showcaseMode]);
+
+  if (showcaseMode) {
+    return <ShowcasePage onClose={() => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('showcase');
+      window.location.href = url.toString();
+    }} />;
+  }
+
   // Showcase mode — accessible via ?showcase=true URL param
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

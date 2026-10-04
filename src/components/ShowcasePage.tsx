@@ -4,6 +4,7 @@ import {
   Users, MessageCircle, Sparkles, ShieldCheck, TrendingUp, Target,
   Heart, Bell, Globe, ArrowRight, ArrowLeft, Play, Pause, X,
   CheckCircle2, Wallet, MapPin, Clock, Brain, Mic, Share2,
+  Linkedin, Twitter, Link as LinkIcon,
 } from 'lucide-react';
 
 interface Slide {
@@ -162,8 +163,11 @@ export function ShowcasePage({ onClose }: ShowcasePageProps) {
   const [current, setCurrent] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [progress, setProgress] = useState(0);
+  const [copied, setCopied] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const showcaseUrl = typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?showcase=true` : '';
 
   const SLIDE_DURATION = 5000;
 
@@ -305,6 +309,50 @@ export function ShowcasePage({ onClose }: ShowcasePageProps) {
             <FeatureMockup type={slide.mockup} accent={slide.accent} bgGradient={slide.bgGradient} />
           </div>
         </div>
+      </div>
+
+      {/* Share bar */}
+      <div className="relative z-10 mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 pb-6 sm:px-10">
+        <a
+          href={`https://www.linkedin.com/sharing/shareOffsite/?url=${encodeURIComponent(showcaseUrl)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white backdrop-blur transition hover:bg-[#0A66C2]"
+        >
+          <Linkedin className="h-4 w-4" /> LinkedIn
+        </a>
+        <a
+          href={`https://twitter.com/intent/tweet?text=Check%20out%20JobPulse%20%E2%80%94%20AI-powered%20job%20search%20with%20trust%20scores&url=${encodeURIComponent(showcaseUrl)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white backdrop-blur transition hover:bg-slate-700"
+        >
+          <Twitter className="h-4 w-4" /> Twitter
+        </a>
+        <a
+          href={`https://wa.me/?text=Check%20out%20JobPulse%20%E2%80%94%20AI-powered%20job%20search%20${encodeURIComponent(showcaseUrl)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white backdrop-blur transition hover:bg-[#25D366] hover:text-white"
+        >
+          <MessageCircle className="h-4 w-4" /> WhatsApp
+        </a>
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(showcaseUrl);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          }}
+          className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white backdrop-blur transition hover:bg-white/10"
+        >
+          {copied ? <><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Copied!</> : <><LinkIcon className="h-4 w-4" /> Copy Link</>}
+        </button>
+        <a
+          href={showcaseUrl.replace('?showcase=true', '')}
+          className="ml-auto flex items-center gap-2 rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-sky-500/30 transition hover:scale-105"
+        >
+          Try JobPulse <ArrowRight className="h-4 w-4" />
+        </a>
       </div>
 
       <style>{`
