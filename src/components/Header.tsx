@@ -100,7 +100,7 @@ export function Header({ onSubscribe, onRefresh, subscriberCount, profile, domai
 
           {profile && (
             <button
-              onClick={() => onNavigate?.('notifications')
+              onClick={() => onNavigate?.('notifications')}
               className="relative inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
             >
               <Bell className="h-4 w-4" />

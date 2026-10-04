@@ -131,7 +131,7 @@ function App() {
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 shadow-lg shadow-sky-500/30">
             <Sparkles className="h-6 w-6 animate-pulse text-white" />
           </div>
-          <p className="text-sm text-slate-500">Loading JobPulse...</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Loading JobPulse...</p>
         </div>
       </div>
     );
