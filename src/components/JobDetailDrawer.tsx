@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   X, MapPin, Building2, ExternalLink, Briefcase, Clock, ShieldCheck, AlertTriangle,
   Zap, Heart, Globe, Wallet, Users, Send, CheckCircle2, Calendar, FileText, Star, Loader2, Upload, Check, Lightbulb,
+  Share2, Linkedin, Twitter, MessageCircle, Link as LinkIcon,
 } from 'lucide-react';
 import type { JobPosting, Resume, ExtendedProfile } from '@/types';
 import { supabase } from '@/lib/supabase';
@@ -394,6 +395,9 @@ export function JobDetailDrawer({ job, isOpen, onClose, userId, onApply, profile
               </span>
             </div>
           </div>
+
+          {/* Social Sharing */}
+          <SocialShareBar job={job} />
         </div>
 
         {/* Sticky action bar */}
@@ -563,4 +567,71 @@ function getInterviewTips(job: JobPosting): string[] {
   tips.push('Prepare thoughtful questions to ask the interviewer about the team, growth opportunities, and what success looks like in this role.');
 
   return tips;
+}
+
+function SocialShareBar({ job }: { job: JobPosting }) {
+  const [copied, setCopied] = useState(false);
+
+  const shareText = `Check out this job: ${job.title} at ${job.company}${job.location ? ` (${job.location})` : ''}`;
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+
+  function shareLinkedIn() {
+    const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+    window.open(url, '_blank', 'width=600,height=600');
+  }
+
+  function shareTwitter() {
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+  }
+
+  function shareWhatsApp() {
+    const url = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
+    window.open(url, '_blank', 'width=600,height=500');
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback
+    }
+  }
+
+  return (
+    <div className="border-t border-slate-200 p-5">
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-900">
+        <Share2 className="h-4 w-4 text-sky-500" />
+        Share this job
+      </h3>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          onClick={shareLinkedIn}
+          className="flex items-center gap-1.5 rounded-xl bg-[#0A66C2] px-3 py-2 text-sm font-medium text-white transition hover:opacity-90 active:scale-95"
+        >
+          <Linkedin className="h-4 w-4" /> LinkedIn
+        </button>
+        <button
+          onClick={shareTwitter}
+          className="flex items-center gap-1.5 rounded-xl bg-[#1DA1F2] px-3 py-2 text-sm font-medium text-white transition hover:opacity-90 active:scale-95"
+        >
+          <Twitter className="h-4 w-4" /> Twitter
+        </button>
+        <button
+          onClick={shareWhatsApp}
+          className="flex items-center gap-1.5 rounded-xl bg-[#25D366] px-3 py-2 text-sm font-medium text-white transition hover:opacity-90 active:scale-95"
+        >
+          <MessageCircle className="h-4 w-4" /> WhatsApp
+        </button>
+        <button
+          onClick={copyLink}
+          className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-95"
+        >
+          {copied ? <><Check className="h-4 w-4 text-emerald-500" /> Copied!</> : <><LinkIcon className="h-4 w-4" /> Copy link</>}
+        </button>
+      </div>
+    </div>
+  );
 }

@@ -1,5 +1,6 @@
-import { Zap, RefreshCw, Bell } from 'lucide-react';
+import { Zap, RefreshCw, Bell, Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
+import { useTheme } from '@/hooks/useTheme';
 import { EDGE_FUNCTIONS } from '@/lib/supabase';
 import { triggerEdgeFunction } from '@/lib/utils';
 import { ProfileMenu } from './ProfileMenu';
@@ -22,6 +23,7 @@ export function Header({ onSubscribe, onRefresh, subscriberCount, profile, domai
   const [fetching, setFetching] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const { unreadCount } = useNotifications();
+  const { theme, toggleTheme } = useTheme();
 
   async function handleFetch() {
     setFetching(true);
@@ -39,7 +41,7 @@ export function Header({ onSubscribe, onRefresh, subscriberCount, profile, domai
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl dark:border-slate-700/80 dark:bg-slate-900/80">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 shadow-lg shadow-sky-500/30">
@@ -47,14 +49,14 @@ export function Header({ onSubscribe, onRefresh, subscriberCount, profile, domai
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold tracking-tight text-slate-900">JobPulse</h1>
+              <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">JobPulse</h1>
               {isAdmin && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-bold text-white">
                   ADMIN
                 </span>
               )}
             </div>
-            <p className="hidden text-xs text-slate-500 sm:block">Verified jobs. Trust scores. AI matching.</p>
+            <p className="hidden text-xs text-slate-500 sm:block dark:text-slate-400">Verified jobs. Trust scores. AI matching.</p>
           </div>
         </div>
 
@@ -88,10 +90,18 @@ export function Header({ onSubscribe, onRefresh, subscriberCount, profile, domai
             </button>
           )}
 
+          <button
+            onClick={toggleTheme}
+            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+
           {profile && (
             <button
-              onClick={() => onNavigate?.('notifications')}
-              className="relative inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+              onClick={() => onNavigate?.('notifications')
+              className="relative inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
             >
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (

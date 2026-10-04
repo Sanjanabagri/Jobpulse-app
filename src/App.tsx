@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Briefcase, CalendarClock, Sparkles, MessageCircle, Star, Users, Bookmark, Send, Building2, Bell, BarChart3, GitCompare, LayoutDashboard } from 'lucide-react';
+import { Briefcase, CalendarClock, Sparkles, MessageCircle, Star, Users, Bookmark, Send, Building2, Bell, BarChart3, GitCompare, LayoutDashboard, Globe } from 'lucide-react';
 import { SplashScreen } from '@/components/SplashScreen';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
@@ -22,6 +22,7 @@ import { AdminOverviewPage } from '@/components/AdminOverviewPage';
 import { JobCompareView } from '@/components/JobCompareView';
 import { SalaryInsightsPage } from '@/components/SalaryInsightsPage';
 import { CareerDashboard } from '@/components/CareerDashboard';
+import { CompanyReviewsPage } from '@/components/CompanyReviewsPage';
 import { JobDetailDrawer } from '@/components/JobDetailDrawer';
 import { useJobApplications } from '@/hooks/useApplications';
 import type { JobPosting } from '@/types';
@@ -29,7 +30,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useDomains, useJobPostings, useDailyDigests, useSubscriberCount } from '@/hooks/useData';
 import { trackVisit } from '@/hooks/useAdminStats';
 
-type Tab = 'dashboard' | 'jobs' | 'compare' | 'insights' | 'triggers' | 'feedback' | 'teams' | 'saved' | 'applications' | 'employer' | 'notifications' | 'admin';
+type Tab = 'dashboard' | 'jobs' | 'compare' | 'insights' | 'reviews' | 'triggers' | 'feedback' | 'teams' | 'saved' | 'applications' | 'employer' | 'notifications' | 'admin';
 
 function App() {
   const auth = useAuth();
@@ -94,12 +95,12 @@ function App() {
   if (isResetMode) {
     if (auth.loading) {
       return (
-        <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-900">
           <div className="flex flex-col items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 shadow-lg shadow-sky-500/30">
               <Sparkles className="h-6 w-6 animate-pulse text-white" />
             </div>
-            <p className="text-sm text-slate-500">Preparing password reset...</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Preparing password reset...</p>
           </div>
         </div>
       );
@@ -156,7 +157,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
       <Header
         onSubscribe={() => setSubscribeOpen(true)}
         onRefresh={handleRefresh}
@@ -180,39 +181,42 @@ function App() {
 
         <main className="min-h-[calc(100vh-4rem)] flex-1 lg:w-[calc(100%-18rem)]">
           {/* Tab bar */}
-          <div className="sticky top-16 z-10 flex items-center gap-1 overflow-x-auto border-b border-slate-200 bg-white/80 px-4 py-2 backdrop-blur-xl sm:px-6 lg:px-8">
-            <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'dashboard' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+          <div className="sticky top-16 z-10 flex items-center gap-1 overflow-x-auto border-b border-slate-200 bg-white/80 px-4 py-2 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/80 sm:px-6 lg:px-8">
+            <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'dashboard' ? 'bg-slate-900 text-white dark:bg-sky-600' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}>
               <LayoutDashboard className="h-4 w-4" /> Dashboard
             </button>
-            <button onClick={() => setActiveTab('jobs')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'jobs' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+            <button onClick={() => setActiveTab('jobs')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'jobs' ? 'bg-slate-900 text-white dark:bg-sky-600' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}>
               <Briefcase className="h-4 w-4" /> Job Feed
             </button>
-            <button onClick={() => setActiveTab('compare')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'compare' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+            <button onClick={() => setActiveTab('compare')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'compare' ? 'bg-slate-900 text-white dark:bg-sky-600' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}>
               <GitCompare className="h-4 w-4" /> Compare
             </button>
-            <button onClick={() => setActiveTab('insights')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'insights' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+            <button onClick={() => setActiveTab('insights')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'insights' ? 'bg-slate-900 text-white dark:bg-sky-600' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}>
               <BarChart3 className="h-4 w-4" /> Insights
             </button>
-            <button onClick={() => setActiveTab('saved')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'saved' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+            <button onClick={() => setActiveTab('reviews')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'reviews' ? 'bg-slate-900 text-white dark:bg-sky-600' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}>
+              <Globe className="h-4 w-4" /> Reviews
+            </button>
+            <button onClick={() => setActiveTab('saved')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'saved' ? 'bg-slate-900 text-white dark:bg-sky-600' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}>
               <Bookmark className="h-4 w-4" /> Saved
             </button>
-            <button onClick={() => setActiveTab('applications')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'applications' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+            <button onClick={() => setActiveTab('applications')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'applications' ? 'bg-slate-900 text-white dark:bg-sky-600' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}>
               <Send className="h-4 w-4" /> Applications
             </button>
-            <button onClick={() => setActiveTab('employer')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'employer' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+            <button onClick={() => setActiveTab('employer')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'employer' ? 'bg-slate-900 text-white dark:bg-sky-600' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}>
               <Building2 className="h-4 w-4" /> Employer
             </button>
-            <button onClick={() => setActiveTab('triggers')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'triggers' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+            <button onClick={() => setActiveTab('triggers')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'triggers' ? 'bg-slate-900 text-white dark:bg-sky-600' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}>
               <CalendarClock className="h-4 w-4" /> Triggers
             </button>
-            <button onClick={() => setActiveTab('teams')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'teams' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+            <button onClick={() => setActiveTab('teams')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'teams' ? 'bg-slate-900 text-white dark:bg-sky-600' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}>
               <Users className="h-4 w-4" /> Teams
             </button>
-            <button onClick={() => setActiveTab('feedback')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'feedback' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+            <button onClick={() => setActiveTab('feedback')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'feedback' ? 'bg-slate-900 text-white dark:bg-sky-600' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}>
               <Star className="h-4 w-4" /> Feedback
             </button>
             {auth.isAdmin && (
-              <button onClick={() => setActiveTab('admin')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'admin' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+              <button onClick={() => setActiveTab('admin')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${activeTab === 'admin' ? 'bg-slate-900 text-white dark:bg-sky-600' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}>
                 <BarChart3 className="h-4 w-4" /> Admin
               </button>
             )}
@@ -246,6 +250,8 @@ function App() {
             <JobCompareView jobs={jobs} />
           ) : activeTab === 'insights' ? (
             <SalaryInsightsPage />
+          ) : activeTab === 'reviews' ? (
+            <CompanyReviewsPage profile={auth.profile} />
           ) : activeTab === 'saved' ? (
             <SavedJobsPage />
           ) : activeTab === 'applications' ? (
