@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Briefcase, CalendarClock, Sparkles, MessageCircle, Star, Users, Bookmark, Send, Building2, Bell, BarChart3, GitCompare, LayoutDashboard, Globe } from 'lucide-react';
+import { Briefcase, CalendarClock, Sparkles, MessageCircle, Star, Users, Bookmark, Send, Building2, Bell, BarChart3, GitCompare, LayoutDashboard, Globe, Play } from 'lucide-react';
 import { SplashScreen } from '@/components/SplashScreen';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
@@ -24,6 +24,7 @@ import { SalaryInsightsPage } from '@/components/SalaryInsightsPage';
 import { CareerDashboard } from '@/components/CareerDashboard';
 import { CompanyReviewsPage } from '@/components/CompanyReviewsPage';
 import { JobDetailDrawer } from '@/components/JobDetailDrawer';
+import { ShowcasePage } from '@/components/ShowcasePage';
 import { useJobApplications } from '@/hooks/useApplications';
 import type { JobPosting } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
@@ -44,6 +45,7 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
+  const [showcaseOpen, setShowcaseOpen] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -117,6 +119,15 @@ function App() {
       />
     );
   }
+
+  // Showcase mode — accessible via ?showcase=true URL param
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('showcase') === 'true') {
+      setShowcaseOpen(true);
+      setShowSplash(false);
+    }
+  }, []);
 
   // Splash screen on app open
   if (showSplash) {
@@ -292,6 +303,17 @@ function App() {
       </button>
 
       <AgentChat isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+
+      {/* Showcase button */}
+      <button
+        onClick={() => setShowcaseOpen(true)}
+        className="fixed bottom-5 left-5 z-30 flex items-center gap-2 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 px-4 py-3 font-semibold text-white shadow-xl shadow-slate-900/30 transition hover:scale-105 active:scale-95"
+      >
+        <Play className="h-5 w-5" fill="white" />
+        <span className="hidden sm:inline">Showcase</span>
+      </button>
+
+      {showcaseOpen && <ShowcasePage onClose={() => setShowcaseOpen(false)} />}
       {auth.profile && (
         <EditProfileModal
           isOpen={editProfileOpen}
